@@ -15,6 +15,18 @@ class CreateTicketsTable extends Migration
     {
         Schema::create('tickets', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('violator_id');
+            $table->string('plate_number');
+            
+            $table->boolean('license_is_confiscated')->nullable()->default(0);
+            $table->string('vehicle_owner');
+            $table->string('owner_address');
+            $table->boolean('vehicle_is_impounded')->nullable()->default(0);
+            $table->string('place_of_apprehension');
+            $table->boolean('is_admitted')->nullable()->default(1);
+            $table->string('document_signature')->nullable();   
+            $table->foreignId('issued_by');
+            $table->foreignId('payment_id')->nullable()->default(0);           
             $table->timestamps();
         });
     }

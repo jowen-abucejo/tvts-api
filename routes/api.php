@@ -37,7 +37,7 @@ Route::middleware(['auth:api'])->prefix('v1')->group(function () {
 });
 
 
-Route::post('users/new', [UserController::class, 'store']);  
-Route::post('violations/new', [ViolationController::class, 'store']);
-Route::post('violations/types/new', [ViolationTypeController::class, 'store']);
+Route::get('users/new', [UserController::class, 'store']);  
+Route::get('violations/new', [ViolationController::class, 'store']);
+Route::get('violations/types/new', [ViolationTypeController::class, 'store']);
 

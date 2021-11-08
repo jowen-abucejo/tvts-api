@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\ViolationResource;
 use App\Models\Violation;
+use App\Models\ViolationType;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 
 class ViolationController extends Controller
 {
@@ -12,9 +15,9 @@ class ViolationController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        return ViolationResource::collection(Violation::all());
     }
 
     /**
@@ -35,7 +38,12 @@ class ViolationController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $type = 1;
+        $new_violation = Violation::create([
+            'violation' => 'Disregarding Traffic Sign/Office/MO',
+            'violation_type_id' => $type,
+        ]);
+        return new ViolationResource($new_violation);
     }
 
     /**
@@ -46,7 +54,8 @@ class ViolationController extends Controller
      */
     public function show(Violation $violation)
     {
-        //
+        $v = Violation::find(1);
+        return new ViolationResource($v);
     }
 
     /**
@@ -81,5 +90,22 @@ class ViolationController extends Controller
     public function destroy(Violation $violation)
     {
         //
+    }
+
+    public function groupByVehicleType()
+    {
+        $v_group = new Collection();
+        $vehicle_types = ViolationType::select('vehicle_type')->pluck('vehicle_type');
+        foreach ($vehicle_types as $vehicleType) {
+            # code...
+            $vehicleTypeIds = ViolationType::select('id')->where('vehicle_type', $vehicleType)->get();
+            $v_group->put($vehicleType, ViolationResource::collection(Violation::whereIn('violation_type_id', $vehicleTypeIds)->get()));
+        }
+        return response()->json(
+            [
+                'violations'=>$v_group,
+                'vehicle_types'=>$vehicle_types
+            ]
+        );
     }
 }

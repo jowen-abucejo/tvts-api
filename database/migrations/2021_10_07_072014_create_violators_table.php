@@ -16,9 +16,10 @@ class CreateViolatorsTable extends Migration
         Schema::create('violators', function (Blueprint $table) {
             $table->id();
             $table->string('name')->unique();
-            $table->string('address');
             $table->date('birth_date');
+            $table->string('address');
             $table->string('license_number')->nullable();
+            $table->string('mobile_number', 10)->nullable();
             $table->string('parent_and_license')->nullable();
             $table->timestamps();
         });

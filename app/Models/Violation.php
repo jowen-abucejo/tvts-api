@@ -43,12 +43,12 @@ class Violation extends Model
 
 
     /**
-     * Get the type associated with the Violation
+     * Get the type that owns the Violation
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function type()
     {
-        return $this->hasOne(ViolationType::class);
+        return $this->belongsTo(ViolationType::class, 'violation_type_id');
     }
 }

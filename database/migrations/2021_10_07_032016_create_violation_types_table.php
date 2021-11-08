@@ -17,11 +17,9 @@ class CreateViolationTypesTable extends Migration
             $table->id();
             $table->string('type');
             $table->string('vehicle_type');
-            $table->string('offense_one_penalty')->nullable();
-            $table->string('offense_two_penalty')->nullable();
-            $table->string('offense_three_penalty')->nullable();
-            $table->softDeletes();
+            $table->string('penalties');
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

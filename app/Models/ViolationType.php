@@ -18,9 +18,7 @@ class ViolationType extends Model
     protected $fillable = [
         'type',
         'vehicle_type',
-        'offense_one_penalty',
-        'offense_two_penalty',
-        'offense_three_penalty',
+        'penalties',
     ];
 
     /**
@@ -30,6 +28,6 @@ class ViolationType extends Model
      */
     public function violations()
     {
-        return $this->hasMany(Violation::class);
+        return $this->hasMany(Violation::class, 'violation_type_id');
     }
 }

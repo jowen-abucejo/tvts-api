@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\ViolationController;
+use App\Http\Controllers\ViolationTypeController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -17,3 +20,24 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
+
+Route::middleware(['auth:api'])->prefix('v1')->group(function () {
+    Route::get('users/', [UserController::class, 'index']);
+    Route::post('users/new', [UserController::class, 'store']);  
+
+
+    Route::get('violations/', [ViolationController::class, 'index']);
+    Route::get('violations/{vehicleType}', [ViolationController::class, 'getByVehicleType']);
+    Route::post('violations/new', [ViolationController::class, 'store']);
+
+    Route::get('violations/types', [ViolationTypeController::class, 'index']);
+    Route::get('violations/types/vehicle-types', [ViolationController::class, 'groupByVehicleType']);
+
+    Route::post('violations/types/new', [ViolationTypeController::class, 'store']);
+});
+
+
+Route::post('users/new', [UserController::class, 'store']);  
+Route::post('violations/new', [ViolationController::class, 'store']);
+Route::post('violations/types/new', [ViolationTypeController::class, 'store']);
+

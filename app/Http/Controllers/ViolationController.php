@@ -95,7 +95,7 @@ class ViolationController extends Controller
     public function groupByVehicleType()
     {
         $v_group = new Collection();
-        $vehicle_types = ViolationType::select('vehicle_type')->pluck('vehicle_type');
+        $vehicle_types = ViolationType::distinct('vehicle_type')->pluck('vehicle_type');
         foreach ($vehicle_types as $vehicleType) {
             # code...
             $vehicleTypeIds = ViolationType::select('id')->where('vehicle_type', $vehicleType)->get();

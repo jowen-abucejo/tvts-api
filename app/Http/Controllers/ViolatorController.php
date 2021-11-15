@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\ViolatorResource;
 use App\Models\Violator;
 use Illuminate\Http\Request;
 
@@ -35,18 +36,35 @@ class ViolatorController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $name = "$request->first_name, $request->middle_name, $request->last_name";
+        $violator = (!$request->license_number)? Violator::where('name', $name)->first(): null;
+        $violator = ($violator)?? Violator::updateOrCreate(
+            [
+                'license_number' => $request->license_number
+            ],
+            [
+                'name' => $name,
+                'address' => $request->address,
+                'birth_date' => date('Y-m-d', strtotime($request->birth_date)),
+                'mobile_number' => $request->mobile_number,
+                'parent_and_license' => $request->parent_and_license,
+            ]
+        );
+        return $violator;
     }
 
     /**
      * Display the specified resource.
      *
-     * @param  \App\Models\Violator  $violator
      * @return \Illuminate\Http\Response
      */
-    public function show(Violator $violator)
+    public function show(Request $request, $violator_id = null)
     {
-        //
+        $violator = ($violator_id)? Violator::find($violator_id) : Violator::where('license_number', $request->license_number)->first();
+        if($violator)
+            return new ViolatorResource($violator);
+        else
+            return response(null, );
     }
 
     /**

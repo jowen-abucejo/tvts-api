@@ -15,13 +15,16 @@ class Ticket extends Model
      * @var string[]
      */
     protected $fillable = [
+        'ticket_number',
         'violator_id',
-        'license_is_confiscated',
+        'plate_number',
         'vehicle_owner',
         'owner_address',
-        'vehicle_is_impounded',
+        'datetime_of_apprehension',
         'place_of_apprehension',
-        'is_admitted',
+        'vehicle_is_impounded',
+        'is_under_protest',
+        'license_is_confiscated',
         'document_signature',
         'issued_by',
         'payment_id',
@@ -56,7 +59,7 @@ class Ticket extends Model
      */
     public function issuedBy()
     {
-        return $this->belongsTo(User::class, 'issued_by', 'id');
+        return $this->belongsTo(User::class, 'issued_by');
     }
 
     /**

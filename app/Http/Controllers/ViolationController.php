@@ -38,12 +38,19 @@ class ViolationController extends Controller
      */
     public function store(Request $request)
     {
-        $type = 1;
-        $new_violation = Violation::create([
+        $model = Violation::create([
             'violation' => 'Disregarding Traffic Sign/Office/MO',
-            'violation_type_id' => $type,
+            'violation_code' => 'V1',
         ]);
-        return new ViolationResource($new_violation);
+        $model->violation_types()->attach([1,2]);
+        $model =Violation::create([
+            'violation' => 'Colorum',
+            'violation_code' => 'V2',
+        ]);
+        $model->violation_types()->attach([3,4]);
+        
+    
+        return ViolationResource::collection(Violation::all());
     }
 
     /**
@@ -95,17 +102,28 @@ class ViolationController extends Controller
     public function groupByVehicleType()
     {
         $v_group = new Collection();
-        $vehicle_types = ViolationType::distinct('vehicle_type')->pluck('vehicle_type');
-        foreach ($vehicle_types as $vehicleType) {
-            # code...
-            $vehicleTypeIds = ViolationType::select('id')->where('vehicle_type', $vehicleType)->get();
-            $v_group->put($vehicleType, ViolationResource::collection(Violation::whereIn('violation_type_id', $vehicleTypeIds)->get()));
-        }
+        // $vehicle_types = ViolationType::select('id', 'vehicle_type')->get()->groupBy('vehicle_type');
+        $vehicle_types = ViolationType::with('violations')->get(["id", "vehicle_type"])->groupBy('vehicle_type');
+        // foreach ($vehicle_types as $vehicleType) {
+        //     # code...
+        //     $v_group->put($vehicleType, ViolationResource::collection(ViolationType::where('vehicle_type', $vehicleType)->get()));
+        // }
+        // return response()->json(
+        //     [
+        //         'violations'=>$v_group,
+        //         'vehicle_types'=>$vehicle_types
+        //     ]
+        // );
+        // $vtest=[];
+        // foreach ($vehicle_types as $vehicle) {
+        //     $vtest = $vehicle->violations;
+        // }
+            // foreach ($vehicle_types as $type => $value) {
+            //     $v_group->put($type, ViolationResource::collection(Violation::wh))
+            // }
         return response()->json(
-            [
-                'violations'=>$v_group,
-                'vehicle_types'=>$vehicle_types
-            ]
+            // ViolationType::where('vehicle_type', '2-3-wheel')->get()
+            $vehicle_types
         );
     }
 }

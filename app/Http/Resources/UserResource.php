@@ -19,7 +19,6 @@ class UserResource extends JsonResource
             "name" => $this->name,
             "user" => $this->username,
             "type" => $this->user_type,
-            "extra" => "testShowMethod"
         ];
     }
 }

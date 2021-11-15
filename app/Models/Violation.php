@@ -17,9 +17,10 @@ class Violation extends Model
      */
     protected $fillable = [
         'violation',
-        'violation_type_id',
+        'violation_code'
     ];
 
+    protected $hidden = ['pivot'];
     /**
      * The tickets that belong to the Violation
      *
@@ -47,8 +48,8 @@ class Violation extends Model
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
-    public function type()
+    public function violation_types()
     {
-        return $this->belongsTo(ViolationType::class, 'violation_type_id');
+        return $this->belongsToMany(ViolationType::class);
     }
 }

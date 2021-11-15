@@ -4,7 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class ViolationResource extends JsonResource
+class ViolatorResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -16,8 +16,12 @@ class ViolationResource extends JsonResource
     {
         return [
             "id" => $this->id,
-            "violation" => $this->violation,
-            "violation_code" => $this->violation_code
-        ];
+            'name'=>explode(',', $this->name),
+            'address'=>$this->address,
+            'birth_date' =>$this->birth_date,
+            'license_number' =>$this->license_number,
+            'mobile_number' =>$this->mobile_number,
+            'parent_and_license' =>$this->parent_and_license,
+        ];    
     }
 }

@@ -19,6 +19,7 @@ class Violator extends Model
         'address',
         'birth_date',
         'license_number',
+        'mobile_number',
         'parent_and_license',
     ];
 

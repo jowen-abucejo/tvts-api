@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateViolationsTable extends Migration
+class CreateViolationViolationTypeTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,12 +13,9 @@ class CreateViolationsTable extends Migration
      */
     public function up()
     {
-        Schema::create('violations', function (Blueprint $table) {
-            $table->id();
-            $table->string('violation'); 
-            $table->string('violation_code')->nullable();
-            $table->timestamps();
-            $table->softDeletes();
+        Schema::create('violation_violation_type', function (Blueprint $table) {
+            $table->foreignId('violation_id');
+            $table->foreignId('violation_type_id');
         });
     }
 
@@ -29,6 +26,6 @@ class CreateViolationsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('violations');
+        Schema::dropIfExists('violation_violation_type');
     }
 }

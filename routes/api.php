@@ -42,15 +42,23 @@ Route::middleware(['auth:api'])->prefix('v1')->group(function () {
     Route::get('violators/violator/{id}', [ViolatorController::class, 'show']);
 
     Route::post('tickets/new', [TicketController::class, 'store']);
+    Route::get('tickets/ticket/', [TicketController::class, 'show']);
+    Route::get('tickets/ticket/{id}', [TicketController::class, 'show']);
 
 });
 
-
+//!START OF TEST ROUTES
+//FOR TESTING ONLY
 Route::get('users/new', [UserController::class, 'store']);  
 Route::get('violations/new', [ViolationController::class, 'store']);
 Route::get('violations/types/new', [ViolationTypeController::class, 'store']);
 Route::get('violations/types/by-vehicle-types', [ViolationController::class, 'groupByVehicleType']);
-Route::get('tickets/ticket/', [TicketController::class, 'show']);  
+Route::get('tickets/', [TicketController::class, 'index']);  
+Route::get('tickets/ticket/sendSMS', [TicketController::class, 'edit']);  
+//!END OF TEST ROUTES
+
+
+Route::post('users/user/login', [UserController::class, 'login']);  //issuing access token
 
 
 

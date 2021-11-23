@@ -6,7 +6,7 @@ use App\Http\Resources\TicketResource;
 use App\Models\Ticket;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
-
+use Nexmo\Laravel\Facade\Nexmo;
 class TicketController extends Controller
 {
     /**
@@ -16,7 +16,7 @@ class TicketController extends Controller
      */
     public function index()
     {
-        //
+        return TicketResource::collection(Ticket::all());
     }
 
     /**
@@ -42,6 +42,7 @@ class TicketController extends Controller
         $ticket = auth()->user()->ticketIssued()->create(
             [
                 'violator_id' => $violator->id,
+                'vehicle_type' => $request->vehicle_type,
                 'plate_number' => $request->plate_number,
                 'vehicle_owner' => $request->vehicle_owner,
                 'owner_address' => $request->owner_address,
@@ -56,6 +57,7 @@ class TicketController extends Controller
         $ticket->ticket_number = "#$ticket->id";
         $ticket->save();
         $ticket->violations()->attach(explode(',',$request->committed_violations));
+        
         return new TicketResource($ticket);
     }
 
@@ -65,9 +67,13 @@ class TicketController extends Controller
      * @param  \App\Models\Ticket  $ticket
      * @return \Illuminate\Http\Response
      */
-    public function show()
+    public function show(Request $request, $ticket_id = null)
     {
-        return TicketResource::collection(Ticket::all());
+        $ticket_number = str_replace('#', '', $request->ticket_number);
+        $ticket = ($ticket_id)? Ticket::find($ticket_id) : Ticket::where('ticket_number', "#$ticket_number")->first();
+        if($ticket)
+            return new TicketResource($ticket);
+        return response(null, );
     }
 
     /**
@@ -76,9 +82,14 @@ class TicketController extends Controller
      * @param  \App\Models\Ticket  $ticket
      * @return \Illuminate\Http\Response
      */
-    public function edit(Ticket $ticket)
+    public function edit()
     {
-        //
+        Nexmo::message()->send([
+            'to'=>"639457833077",
+            'from'=>'TVTS_API',
+            'text'=>'Test SMS from api',
+        ]);
+        return "HELLO SMS";
     }
 
     /**

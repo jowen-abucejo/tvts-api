@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
@@ -97,5 +99,27 @@ class UserController extends Controller
         return response()->json([
             'message' => 'Logout Success'
         ]);
+    }
+
+    public function login(Request $request)
+    {
+        $credentials = $request->only('username', 'password');
+        // $credentials = ["username"=>"admin123", "password"=>"admin"];
+
+        if (Auth::attempt($credentials)) {
+            // Authentication passed...
+             $user = Auth::user();
+             $token = $user->createToken($user->username);
+             $expiration = $token->token->expires_at->diffInSeconds(Carbon::now());
+
+            return response()->json(
+                [
+                    "access_token" => $token->accessToken,
+                    "token_type" => "Bearer",
+                    "expires_in" => $expiration
+                ]
+            );
+        }
+        return response()->json(["error" => "invalid_credentials", "message" => "The user credentials were incorrect."], 401); 
     }
 }

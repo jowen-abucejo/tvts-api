@@ -17,6 +17,7 @@ class Ticket extends Model
     protected $fillable = [
         'ticket_number',
         'violator_id',
+        'vehicle_type',
         'plate_number',
         'vehicle_owner',
         'owner_address',

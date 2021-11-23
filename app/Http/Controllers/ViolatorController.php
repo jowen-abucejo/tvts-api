@@ -63,8 +63,7 @@ class ViolatorController extends Controller
         $violator = ($violator_id)? Violator::find($violator_id) : Violator::where('license_number', $request->license_number)->first();
         if($violator)
             return new ViolatorResource($violator);
-        else
-            return response(null, );
+        return response(null, );
     }
 
     /**

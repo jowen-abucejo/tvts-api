@@ -17,6 +17,7 @@ class CreateTicketsTable extends Migration
             $table->id();
             $table->string('ticket_number')->nullable()->unique();
             $table->foreignId('violator_id')->references('id')->on('violators');
+            $table->string('vehicle_type', 10);
             $table->string('plate_number', 20);
             
             $table->string('vehicle_owner');

@@ -15,7 +15,7 @@ class ViolatorController extends Controller
      */
     public function index()
     {
-        //
+        return ViolatorResource::collection(Violator::all());
     }
 
     /**

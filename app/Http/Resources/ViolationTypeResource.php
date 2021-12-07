@@ -19,7 +19,7 @@ class ViolationTypeResource extends JsonResource
             "id" => $this->id,
             "type" => $this->type,
             "vehicle_type" => $this->vehicle_type,
-            "penalty" =>$this->when(Auth::user()->isAdmin(), explode("," , $this->penalties))
+            "penalties" =>explode("," , $this->penalties)
         ];
     }
 }

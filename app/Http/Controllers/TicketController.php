@@ -4,8 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\TicketResource;
 use App\Models\Ticket;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Date;
+use Illuminate\Support\Facades\DB;
 use Nexmo\Laravel\Facade\Nexmo;
 class TicketController extends Controller
 {
@@ -54,11 +57,23 @@ class TicketController extends Controller
                 'document_signature' => $filepath,
             ]
         );
-        $ticket->ticket_number = "#$ticket->id";
-        $ticket->save();
-        $ticket->violations()->attach(explode(',',$request->committed_violations));
-        
-        return new TicketResource($ticket);
+        if($ticket){
+            $ticket->ticket_number = "#$ticket->id";
+            $ticket->save();
+
+            $violation_ids = explode(',',$request->committed_violations);
+            $ticket->violations()->attach($violation_ids);
+            
+            Nexmo::message()->send([
+                'to'=>$ticket->mobile_number,
+                'from'=>'Naic PNP/NTMO',
+                'text'=>"Citation Ticket $ticket->ticket_number was issued to you. Please appear at the Naic PNP/NTMO  within 72 hours to answer the stated charges. 
+                Failing to settle your case within 15 days from date of apprehension will result to the suspension/revocation of your license.",
+            ]);
+            return new TicketResource($ticket);
+        } else {
+            return null;
+        }
     }
 
     /**
@@ -84,12 +99,7 @@ class TicketController extends Controller
      */
     public function edit()
     {
-        Nexmo::message()->send([
-            'to'=>"639457833077",
-            'from'=>'TVTS_API',
-            'text'=>'Test SMS from api',
-        ]);
-        return "HELLO SMS";
+       
     }
 
     /**
@@ -113,5 +123,41 @@ class TicketController extends Controller
     public function destroy(Ticket $ticket)
     {
         //
+    }
+
+    public function countByGroupDate(Request $request)
+    {
+        if(!$request->month || !$request->year){
+           $tickets  = Ticket::where(
+                'datetime_of_apprehension', '>=', now()->startOfMonth()->toDateString()
+            )->where('datetime_of_apprehension', '<=', now()->endOfMonth()->toDateString()
+            )->groupBy('day')->orderBy('day', 'ASC')->get(array(
+                    DB::raw('date_format(datetime_of_apprehension, "%b-%d") as day'),
+                    DB::raw('COUNT(*) as "total_tickets"')
+                )
+            );
+            return response()->json([
+                "data" => $tickets,
+                "date" => ["month"=>now()->monthName, "year"=>now()->year]
+            ]);
+        } else if($request->month && $request->year) {
+            $next_month = ($request->month<12)? $request->month + 1: 1;
+            $tickets  = Ticket::where(
+                'datetime_of_apprehension', '>=', Carbon::createFromFormat('Y-m-d', $request->year.'-'.$request->month.'-01')
+            )->where(
+                'datetime_of_apprehension', '<', Carbon::createFromFormat('Y-m-d', $request->year.'-'.$next_month.'-01')
+            )->groupBy('day')->orderBy('day', 'ASC')->get(
+                array(
+                    DB::raw('date_format(datetime_of_apprehension, "%b-%d") as day'),
+                    DB::raw('COUNT(*) as "total_tickets"')
+                )
+            );
+            return response()->json([
+                "data" => $tickets,
+                "date" => ["month"=>Carbon::createFromFormat('Y-m-d', $request->year.'-'.$request->month.'-01')->monthName, "year"=>Carbon::createFromFormat('Y-m-d', $request->year.'-'.$request->month.'-01')->year]
+            ]);
+        } else {
+            return null;
+        }
     }
 }

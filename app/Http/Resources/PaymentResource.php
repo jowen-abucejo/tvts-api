@@ -4,7 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class ViolationResource extends JsonResource
+class PaymentResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -15,10 +15,9 @@ class ViolationResource extends JsonResource
     public function toArray($request)
     {
         return [
-            "id" => $this->id,
-            "violation" => $this->violation,
-            "violation_code" => $this->violation_code,
-            "violation_types" => ViolationTypeResource::collection($this->violation_types)
+            'OR_number'=>$this->OR_number,
+            'penalties' =>$this->penalties,
+            'total_amount' => $this->total_amount,
         ];
     }
 }

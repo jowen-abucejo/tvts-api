@@ -22,6 +22,7 @@ class ViolatorResource extends JsonResource
             'license_number' =>$this->license_number,
             'mobile_number' =>$this->mobile_number,
             'parent_and_license' =>$this->parent_and_license,
+            'number_of_offenses' => count($this->tickets)
         ];    
     }
 }

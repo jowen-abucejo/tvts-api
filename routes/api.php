@@ -41,9 +41,11 @@ Route::middleware(['auth:api'])->prefix('v1')->group(function () {
     Route::get('violators/violator/', [ViolatorController::class, 'show']);
     Route::get('violators/violator/{id}', [ViolatorController::class, 'show']);
 
+    Route::get('tickets/', [TicketController::class, 'index']);  
     Route::post('tickets/new', [TicketController::class, 'store']);
     Route::get('tickets/ticket/', [TicketController::class, 'show']);
     Route::get('tickets/ticket/{id}', [TicketController::class, 'show']);
+    Route::get('tickets/count/by-date', [TicketController::class, 'countByGroupDate']);  
 
 });
 
@@ -54,7 +56,9 @@ Route::get('violations/new', [ViolationController::class, 'store']);
 Route::get('violations/types/new', [ViolationTypeController::class, 'store']);
 Route::get('violations/types/by-vehicle-types', [ViolationController::class, 'groupByVehicleType']);
 Route::get('tickets/', [TicketController::class, 'index']);  
+Route::get('tickets/count/by-date', [TicketController::class, 'countByGroupDate']);  
 Route::get('tickets/ticket/sendSMS', [TicketController::class, 'edit']);  
+Route::get('violators/', [ViolatorController::class, 'index']);  
 //!END OF TEST ROUTES
 
 

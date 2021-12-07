@@ -128,48 +128,48 @@ class TicketController extends Controller
     public function countByGroupDate(Request $request)
     {
         if(!$request->month || !$request->year){
-           $tickets  = Ticket::where(
-                'datetime_of_apprehension', '>=', now()->startOfMonth()->toDateString()
-            )->where('datetime_of_apprehension', '<=', now()->endOfMonth()->toDateString()
-            )->groupBy('day')->orderBy('day', 'ASC')->get(array(
-                // DB::raw('date_format(datetime_of_apprehension, "%b-%d") as day'),
-                DB::raw("to_char(datetime_of_apprehension, 'Mon-DD') as day"),
-                DB::raw('COUNT(*) as "total_tickets"')
-                )
-            );
-            return response()->json([
-                "data" => $tickets,
-                "date" => ["month"=>now()->monthName, "year"=>now()->year]
-            ]);
-        } else if($request->month && $request->year) {
-            $next_month = ($request->month<12)? $request->month + 1: 1;
             $tickets  = Ticket::where(
-                'datetime_of_apprehension', '>=', Carbon::createFromFormat('Y-m-d', $request->year.'-'.$request->month.'-01')
-            )->where(
-                'datetime_of_apprehension', '<', Carbon::createFromFormat('Y-m-d', $request->year.'-'.$next_month.'-01')
-            )->groupBy('day')->orderBy('day', 'ASC')->get(
-                array(
-                    // DB::raw('date_format(datetime_of_apprehension, "%b-%d") as day'),
-                    DB::raw("to_char(datetime_of_apprehension, 'Mon-DD') as day"),
-                    DB::raw('COUNT(*) as "total_tickets"')
-                )
-            );
-            return response()->json([
-                "data" => $tickets,
-                "date" => ["month"=>Carbon::createFromFormat('Y-m-d', $request->year.'-'.$request->month.'-01')->monthName, "year"=>Carbon::createFromFormat('Y-m-d', $request->year.'-'.$request->month.'-01')->year]
-            ]);
-        } else {
-            $tickets = Ticket::latest()->take(30)->groupBy('day')->orderBy('day', 'ASC')->get(
-                array(
-                    // DB::raw('date_format(datetime_of_apprehension, "%b-%d") as day'),
-                    DB::raw("to_char(datetime_of_apprehension, 'Mon-DD') as day"),
-                    DB::raw('COUNT(*) as "total_tickets"')
-                )
-            );
-            return response()->json([
-                "data" => $tickets,
-                "date" => ["month"=>"Latest", "year"=>""]   
-            ]);
-        }
+                 'datetime_of_apprehension', '>=', now()->startOfMonth()->toDateString()
+             )->where('datetime_of_apprehension', '<=', now()->endOfMonth()->toDateString()
+             )->groupBy('day')->orderBy('day', 'ASC')->get(array(
+                 // DB::raw('date_format(datetime_of_apprehension, "%b-%d") as day'),
+                 DB::raw("to_char(datetime_of_apprehension, 'Mon-DD') as day"),
+                 DB::raw('COUNT(*) as "total_tickets"')
+                 )
+             );
+             return response()->json([
+                 "data" => $tickets,
+                 "date" => ["month"=>now()->monthName, "year"=>now()->year]
+             ]);
+         } else if($request->month && $request->year) {
+             $next_month = ($request->month<12)? $request->month + 1: 1;
+             $tickets  = Ticket::where(
+                 'datetime_of_apprehension', '>=', Carbon::createFromFormat('Y-m-d', $request->year.'-'.$request->month.'-01')
+             )->where(
+                 'datetime_of_apprehension', '<', Carbon::createFromFormat('Y-m-d', $request->year.'-'.$next_month.'-01')
+             )->groupBy('day')->orderBy('day', 'ASC')->get(
+                 array(
+                     // DB::raw('date_format(datetime_of_apprehension, "%b-%d") as day'),
+                     DB::raw("to_char(datetime_of_apprehension, 'Mon-DD') as day"),
+                     DB::raw('COUNT(*) as "total_tickets"')
+                 )
+             );
+             return response()->json([
+                 "data" => $tickets,
+                 "date" => ["month"=>Carbon::createFromFormat('Y-m-d', $request->year.'-'.$request->month.'-01')->monthName, "year"=>Carbon::createFromFormat('Y-m-d', $request->year.'-'.$request->month.'-01')->year]
+             ]);
+         } else {
+             $tickets = Ticket::latest()->take(30)->groupBy('day')->orderBy('day', 'ASC')->get(
+                 array(
+                     // DB::raw('date_format(datetime_of_apprehension, "%b-%d") as day'),
+                     DB::raw("to_char(datetime_of_apprehension, 'Mon-DD') as day"),
+                     DB::raw('COUNT(*) as "total_tickets"')
+                 )
+             );
+             return response()->json([
+                 "data" => $tickets,
+                 "date" => ["month"=>"Latest", "year"=>""]   
+             ]);
+         }
     }
 }

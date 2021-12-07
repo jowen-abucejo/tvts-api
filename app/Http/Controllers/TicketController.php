@@ -132,8 +132,9 @@ class TicketController extends Controller
                 'datetime_of_apprehension', '>=', now()->startOfMonth()->toDateString()
             )->where('datetime_of_apprehension', '<=', now()->endOfMonth()->toDateString()
             )->groupBy('day')->orderBy('day', 'ASC')->get(array(
-                    DB::raw('date_format(datetime_of_apprehension, "%b-%d") as day'),
-                    DB::raw('COUNT(*) as "total_tickets"')
+                // DB::raw('date_format(datetime_of_apprehension, "%b-%d") as day'),
+                DB::raw("to_char(datetime_of_apprehension, 'Mon-DD') as day"),
+                DB::raw('COUNT(*) as "total_tickets"')
                 )
             );
             return response()->json([
@@ -148,7 +149,8 @@ class TicketController extends Controller
                 'datetime_of_apprehension', '<', Carbon::createFromFormat('Y-m-d', $request->year.'-'.$next_month.'-01')
             )->groupBy('day')->orderBy('day', 'ASC')->get(
                 array(
-                    DB::raw('date_format(datetime_of_apprehension, "%b-%d") as day'),
+                    // DB::raw('date_format(datetime_of_apprehension, "%b-%d") as day'),
+                    DB::raw("to_char(datetime_of_apprehension, 'Mon-DD') as day"),
                     DB::raw('COUNT(*) as "total_tickets"')
                 )
             );
@@ -157,7 +159,17 @@ class TicketController extends Controller
                 "date" => ["month"=>Carbon::createFromFormat('Y-m-d', $request->year.'-'.$request->month.'-01')->monthName, "year"=>Carbon::createFromFormat('Y-m-d', $request->year.'-'.$request->month.'-01')->year]
             ]);
         } else {
-            return null;
+            $tickets = Ticket::latest()->take(30)->groupBy('day')->orderBy('day', 'ASC')->get(
+                array(
+                    // DB::raw('date_format(datetime_of_apprehension, "%b-%d") as day'),
+                    DB::raw("to_char(datetime_of_apprehension, 'Mon-DD') as day"),
+                    DB::raw('COUNT(*) as "total_tickets"')
+                )
+            );
+            return response()->json([
+                "data" => $tickets,
+                "date" => ["month"=>"Latest", "year"=>""]   
+            ]);
         }
     }
 }

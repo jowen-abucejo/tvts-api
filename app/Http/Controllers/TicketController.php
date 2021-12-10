@@ -180,7 +180,7 @@ class TicketController extends Controller
         }
 
         if(count($data->ticket_count) < 5){
-            $data->ticket_count = Ticket::take(30)->groupBy('day')->orderBy('datetime_of_apprehension', 'DESC')->get(
+            $data->ticket_count = Ticket::take(30)->groupBy(['day', 'datetime_of_apprehension'])->orderBy('datetime_of_apprehension', 'DESC')->get(
                 array(
                     // DB::raw('date_format(datetime_of_apprehension, "%b-%d-%Y") as day'),
                     DB::raw("to_char(datetime_of_apprehension, 'Mon-DD-YYYY') as day"),

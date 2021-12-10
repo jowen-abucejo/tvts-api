@@ -180,13 +180,13 @@ class TicketController extends Controller
         }
 
         if(count($data->ticket_count) < 5){
-            $data->ticket_count = Ticket::latest()->take(30)->groupBy('day')->orderBy('created_at', 'ASC')->get(
+            $data->ticket_count = Ticket::take(30)->groupBy('day')->orderBy('datetime_of_apprehension', 'DESC')->get(
                 array(
                     // DB::raw('date_format(datetime_of_apprehension, "%b-%d-%Y") as day'),
-                    DB::raw("to_char(datetime_of_apprehension, 'Mon-DD') as day"),
+                    DB::raw("to_char(datetime_of_apprehension, 'Mon-DD-YYYY') as day"),
                     DB::raw('COUNT(*) as "total_tickets"')
                 )
-            );
+            )->sortDesc();
             $data->date = ["month"=>"Latest", "year"=>''];
             $data->tickets = TicketResource::collection(Ticket::latest(
                 )->take(30)->orderBy('datetime_of_apprehension', 'DESC')->get()

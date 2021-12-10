@@ -184,7 +184,8 @@ class TicketController extends Controller
                 array(
                     // DB::raw('date_format(datetime_of_apprehension, "%b-%d-%Y") as day'),
                     DB::raw("to_char(datetime_of_apprehension, 'Mon-DD-YYYY') as day"),
-                    DB::raw('COUNT(*) as "total_tickets"')
+                    DB::raw('COUNT(*) as "total_tickets"'),
+                    DB::raw('datetime_of_apprehension')
                 )
             )->sortBy(['datetime_of_apprehension', 'ASC']);
             $data->date = ["month"=>"Latest", "year"=>''];

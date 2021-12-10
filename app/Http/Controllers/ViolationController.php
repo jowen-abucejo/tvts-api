@@ -135,22 +135,39 @@ class ViolationController extends Controller
     public function groupByAndCount(Request $request)
     {
         $data = (object)['all_violation_ticket_count'=>[], 'violation_ticket_count_within_date'=>[]];
-        $within_date_ids = $request->ticket_ids?? 0;
         $all_ids = Ticket::select('id')->get();
+        $within_date_ids = $request->ticket_ids?? [0,];
 
-        $data->violation_ticket_count_within_date = Violation::with('tickets', function($query) use ($within_date_ids) {
-            return $query->whereIn('id', $within_date_ids);
-        })->groupBy(['violation', 'total_tickets'])->orderBy('total_tickets', 'DESC')->get( array(
-            DB::raw('violation'),
-            DB::raw('COUNT(tickets.id) as "total_tickets"')
-        ));
+        // $data->violation_ticket_count_within_date = Violation::whereHas('tickets', function($query) use ($all_ids) {
+        //     return $query->whereIn('id', $all_ids);
+        // })->groupBy(['violation',])->orderBy('total_tickets', 'DESC')->get( array(
+        //     DB::raw('violation'),
+        //     DB::raw('COUNT(*) as "total_tickets"')
+        // ));
 
-        $data->all_violation_ticket_count = Violation::with('tickets', function($query) use ($all_ids) {
-            return $query->whereIn('id', $all_ids);
-        })->groupBy(['violation', 'total_tickets'])->orderBy('total_tickets', 'DESC')->get( array(
-            DB::raw('violation'),
-            DB::raw('COUNT(tickets.id) as "total_tickets"')
-        ));
+        // $data->all_violation_ticket_count = Violation::whereHas('tickets', function($query) use ($all_ids) {
+        //     return $query->whereIn('id', $all_ids);
+        // })->groupBy(['violation',])->orderBy('total_tickets', 'DESC')->get( array(
+        //     DB::raw('violation'),
+        //     DB::raw('COUNT(*) as "total_tickets"')
+        // ));
+
+        $data->violation_ticket_count_within_date = Violation::join('ticket_violation', 'violations.id', '=', 'ticket_violation.violation_id'
+            )->whereIn('ticket_id', $within_date_ids)->groupBy(['violation',])->orderBy('total_tickets', 'DESC'
+            )->get( 
+                array(
+                    DB::raw('violation'),
+                    DB::raw('COUNT(*) as "total_tickets"')
+                )
+            );
+        $data->all_violation_ticket_count = Violation::join('ticket_violation', 'violations.id', '=', 'ticket_violation.violation_id'
+        )->whereIn('ticket_id', $all_ids)->groupBy(['violation',])->orderBy('total_tickets', 'DESC'
+        )->get( 
+            array(
+                DB::raw('violation'),
+                DB::raw('COUNT(*) as "total_tickets"')
+            )
+        );
         return $data;
     }
 }

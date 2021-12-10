@@ -142,14 +142,14 @@ class ViolationController extends Controller
             return $query->whereIn('id', $all_ids);
         })->groupBy(['violation',])->orderBy('total_tickets', 'DESC')->get( array(
             DB::raw('violation'),
-            DB::raw('COUNT(*) as "total_tickets"')
+            DB::raw('COUNT(tickets) as "total_tickets"')
         ));
 
         $data->all_violation_ticket_count = Violation::whereHas('tickets', function($query) use ($all_ids) {
             return $query->whereIn('id', $all_ids);
         })->groupBy(['violation',])->orderBy('total_tickets', 'DESC')->get( array(
             DB::raw('violation'),
-            DB::raw('COUNT(*) as "total_tickets"')
+            DB::raw('COUNT(tickets) as "total_tickets"')
         ));
         return $data;
     }

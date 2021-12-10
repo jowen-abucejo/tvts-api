@@ -186,7 +186,7 @@ class TicketController extends Controller
                     DB::raw("to_char(datetime_of_apprehension, 'Mon-DD-YYYY') as day"),
                     DB::raw('COUNT(*) as "total_tickets"')
                 )
-            )->sortDesc();
+            )->sort();
             $data->date = ["month"=>"Latest", "year"=>''];
             $data->tickets = TicketResource::collection(Ticket::latest(
                 )->take(30)->orderBy('datetime_of_apprehension', 'DESC')->get()

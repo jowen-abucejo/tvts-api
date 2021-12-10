@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\ViolationResource;
+use App\Models\Ticket;
 use App\Models\Violation;
 use App\Models\ViolationType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class ViolationController extends Controller
 {
@@ -17,6 +19,9 @@ class ViolationController extends Controller
      */
     public function index(Request $request)
     {
+        if($request->ticket_ids){
+            return ViolationResource::collection(Violation::whereIn('id', $request->ticket_ids)->get());
+        }
         return ViolationResource::collection(Violation::all());
     }
 
@@ -125,5 +130,27 @@ class ViolationController extends Controller
             // ViolationType::where('vehicle_type', '2-3-wheel')->get()
             $vehicle_types
         );
+    }
+
+    public function groupByAndCount(Request $request)
+    {
+        $data = (object)['all_violation_ticket_count'=>[], 'violation_ticket_count_within_date'=>[]];
+        $within_date_ids = $request->ticket_ids?? 0;
+        $all_ids = Ticket::select('id')->get();
+
+        $data->violation_ticket_count_within_date = Violation::whereHas('tickets', function($query) use ($all_ids) {
+            return $query->whereIn('id', $all_ids);
+        })->groupBy(['violation',])->orderBy('total_tickets', 'DESC')->get( array(
+            DB::raw('violation'),
+            DB::raw('COUNT(*) as "total_tickets"')
+        ));
+
+        $data->all_violation_ticket_count = Violation::whereHas('tickets', function($query) use ($all_ids) {
+            return $query->whereIn('id', $all_ids);
+        })->groupBy(['violation',])->orderBy('total_tickets', 'DESC')->get( array(
+            DB::raw('violation'),
+            DB::raw('COUNT(*) as "total_tickets"')
+        ));
+        return $data;
     }
 }

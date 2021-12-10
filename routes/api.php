@@ -36,6 +36,7 @@ Route::middleware(['auth:api'])->prefix('v1')->group(function () {
     Route::get('violations/types/by-vehicle-types', [ViolationController::class, 'groupByVehicleType']);
 
     Route::post('violations/types/new', [ViolationTypeController::class, 'store']);
+    Route::get('violations/count/by-ticket', [ViolationController::class, 'groupByAndCount']);
 
     Route::get('violators/', [ViolatorController::class, 'index']);
     Route::get('violators/violator/', [ViolatorController::class, 'show']);
@@ -45,7 +46,7 @@ Route::middleware(['auth:api'])->prefix('v1')->group(function () {
     Route::post('tickets/new', [TicketController::class, 'store']);
     Route::get('tickets/ticket/', [TicketController::class, 'show']);
     Route::get('tickets/ticket/{id}', [TicketController::class, 'show']);
-    Route::get('tickets/count/by-date', [TicketController::class, 'countByGroupDate']);  
+    Route::get('tickets/count/by-date', [TicketController::class, 'groupByDateAndCount']);  
 
 });
 
@@ -53,12 +54,15 @@ Route::middleware(['auth:api'])->prefix('v1')->group(function () {
 //FOR TESTING ONLY
 Route::get('users/new', [UserController::class, 'store']);  
 Route::get('violations/new', [ViolationController::class, 'store']);
+Route::get('violations', [ViolationController::class, 'index']);
 Route::get('violations/types/new', [ViolationTypeController::class, 'store']);
 Route::get('violations/types/by-vehicle-types', [ViolationController::class, 'groupByVehicleType']);
 Route::get('tickets/', [TicketController::class, 'index']);  
-Route::get('tickets/count/by-date', [TicketController::class, 'countByGroupDate']);  
+Route::get('tickets/count/by-date', [TicketController::class, 'groupByDateAndCount']);  
 Route::get('tickets/ticket/sendSMS', [TicketController::class, 'edit']);  
 Route::get('violators/', [ViolatorController::class, 'index']);  
+Route::get('violations/count/by-ticket', [ViolationController::class, 'groupByAndCount']);
+
 //!END OF TEST ROUTES
 
 

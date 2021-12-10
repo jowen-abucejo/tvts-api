@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Auth;
 
 class ViolationResource extends JsonResource
 {
@@ -18,7 +19,8 @@ class ViolationResource extends JsonResource
             "id" => $this->id,
             "violation" => $this->violation,
             "violation_code" => $this->violation_code,
-            "violation_types" => ViolationTypeResource::collection($this->violation_types)
+            "violation_types" => ViolationTypeResource::collection($this->violation_types),
+            "ticket_count" => $this->tickets_count
         ];
     }
 }

@@ -7,7 +7,6 @@ use App\Models\Ticket;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Nexmo\Laravel\Facade\Nexmo;
 class TicketController extends Controller
@@ -17,9 +16,11 @@ class TicketController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        return TicketResource::collection(Ticket::all());
+        $limit = ($request->limit)?? 30;
+        $order = ($request->order)?? 'DESC';
+        return TicketResource::collection(Ticket::orderBy('datetime_of_apprehension', $order)->paginate($limit));
     }
 
     /**
@@ -125,51 +126,78 @@ class TicketController extends Controller
         //
     }
 
-    public function countByGroupDate(Request $request)
+    public function groupByDateAndCount(Request $request)
     {
+        $data = (object)["ticket_count"=>[], "date"=>(object)[], "tickets"=>(object)[], "violation_count"=>[]];
+
         if(!$request->month || !$request->year){
-            $tickets  = Ticket::where(
-                 'datetime_of_apprehension', '>=', now()->startOfMonth()->toDateString()
-             )->where('datetime_of_apprehension', '<=', now()->endOfMonth()->toDateString()
-             )->groupBy('day')->orderBy('day', 'ASC')->get(array(
-                 // DB::raw('date_format(datetime_of_apprehension, "%b-%d") as day'),
-                 DB::raw("to_char(datetime_of_apprehension, 'Mon-DD') as day"),
-                 DB::raw('COUNT(*) as "total_tickets"')
-                 )
-             );
-             return response()->json([
-                 "data" => $tickets,
-                 "date" => ["month"=>now()->monthName, "year"=>now()->year]
-             ]);
+            $start_date = now()->startOfMonth()->toDateString();
+            $end_date = now()->endOfMonth()->toDateString();
+            $ticket_count  = Ticket::where(
+                'datetime_of_apprehension', '>=', $start_date
+            )->where('datetime_of_apprehension', '<=', $end_date
+            )->groupBy('day')->orderBy('day', 'ASC')->get(array(
+                // DB::raw('date_format(datetime_of_apprehension, "%b-%d") as day'),
+                DB::raw("to_char(datetime_of_apprehension, 'Mon-DD') as day"),
+                DB::raw('COUNT(*) as "total_tickets"')
+                )
+            );
+            if(count($ticket_count) >= 5){
+                $data->ticket_count = $ticket_count;
+                $data->date = ["month"=>now()->monthName, "year"=>now()->year];
+                $data->tickets = TicketResource::collection(Ticket::where(
+                        'datetime_of_apprehension', '>=', $start_date
+                    )->where(
+                        'datetime_of_apprehension', '<=', $end_date
+                    )->orderBy('datetime_of_apprehension', 'DESC')->get()
+                );
+            }             
          } else if($request->month && $request->year) {
-             $next_month = ($request->month<12)? $request->month + 1: 1;
-             $tickets  = Ticket::where(
-                 'datetime_of_apprehension', '>=', Carbon::createFromFormat('Y-m-d', $request->year.'-'.$request->month.'-01')
-             )->where(
-                 'datetime_of_apprehension', '<', Carbon::createFromFormat('Y-m-d', $request->year.'-'.$next_month.'-01')
-             )->groupBy('day')->orderBy('day', 'ASC')->get(
-                 array(
-                     // DB::raw('date_format(datetime_of_apprehension, "%b-%d") as day'),
-                     DB::raw("to_char(datetime_of_apprehension, 'Mon-DD') as day"),
-                     DB::raw('COUNT(*) as "total_tickets"')
-                 )
-             );
-             return response()->json([
-                 "data" => $tickets,
-                 "date" => ["month"=>Carbon::createFromFormat('Y-m-d', $request->year.'-'.$request->month.'-01')->monthName, "year"=>Carbon::createFromFormat('Y-m-d', $request->year.'-'.$request->month.'-01')->year]
-             ]);
-         } else {
-             $tickets = Ticket::latest()->take(30)->groupBy('day')->orderBy('day', 'ASC')->get(
-                 array(
-                     // DB::raw('date_format(datetime_of_apprehension, "%b-%d") as day'),
-                     DB::raw("to_char(datetime_of_apprehension, 'Mon-DD') as day"),
-                     DB::raw('COUNT(*) as "total_tickets"')
-                 )
-             );
-             return response()->json([
-                 "data" => $tickets,
-                 "date" => ["month"=>"Latest", "year"=>""]   
-             ]);
-         }
+            $next_month = ($request->month<12)? $request->month + 1: 1;
+            $start_date =  Carbon::createFromFormat('Y-m-d', $request->year.'-'.$request->month.'-01');
+            $end_date = Carbon::createFromFormat('Y-m-d', $request->year.'-'.$next_month.'-01');
+            $ticket_count  = Ticket::where(
+                'datetime_of_apprehension', '>=', $start_date
+            )->where(
+                'datetime_of_apprehension', '<', $end_date
+            )->groupBy('day')->orderBy('day', 'ASC')->get(
+                array(
+                    // DB::raw('date_format(datetime_of_apprehension, "%b-%d") as day'),
+                    DB::raw("to_char(datetime_of_apprehension, 'Mon-DD') as day"),
+                    DB::raw('COUNT(*) as "total_tickets"')
+                )
+            );
+            if(count($ticket_count) >= 5){
+                $data->ticket_count = $ticket_count;
+                $data->date = ["month"=>$start_date->monthName, "year"=>$start_date->year];
+                $data->tickets = TicketResource::collection(Ticket::where(
+                        'datetime_of_apprehension', '>=', $start_date
+                    )->where(
+                        'datetime_of_apprehension', '<', $end_date
+                    )->orderBy('datetime_of_apprehension', 'DESC')->get()
+                );
+            }
+        }
+
+        if(count($data->ticket_count) < 5){
+            $data->ticket_count = Ticket::latest()->take(30)->groupBy('day')->orderBy('day', 'ASC')->get(
+                array(
+                    // DB::raw('date_format(datetime_of_apprehension, "%b-%d-%Y") as day'),
+                    DB::raw("to_char(datetime_of_apprehension, 'Mon-DD') as day"),
+                    DB::raw('COUNT(*) as "total_tickets"')
+                )
+            );
+            $data->date = ["month"=>"Latest", "year"=>''];
+            $data->tickets = TicketResource::collection(Ticket::latest(
+                )->take(30)->orderBy('datetime_of_apprehension', 'DESC')->get()
+            );
+        }
+    
+        $request->merge(['ticket_ids'=>$data->tickets->pluck('id')]);
+        $data->violation_count = app('\App\Http\Controllers\ViolationController')->groupByAndCount($request);
+        return response()->json([
+            "data" => $data,
+        ]);
     }
+
 }

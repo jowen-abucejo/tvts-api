@@ -110,7 +110,7 @@ class ViolatorController extends Controller
 
         $grouped = Violator::select('id' )->withCount('tickets')->whereHas('tickets', function($query) use($within_date_ids) {
             return $query->whereIn('id', $within_date_ids);
-        })->get();
+        })->orderBy('tickets_count', 'ASC')->get();
 
         $data->violator_ticket_count_within_date = $grouped->mapToGroups(function ($item, $key) {
             return ["offense_".$item['tickets_count'] => $item['id']];
@@ -118,7 +118,7 @@ class ViolatorController extends Controller
 
         $grouped = Violator::select('id' )->withCount('tickets')->whereHas('tickets', function($query) use($all_ids) {
             return $query->whereIn('id', $all_ids);
-        })->get();
+        })->orderBy('tickets_count', 'ASC')->get();
 
         $data->all_violator_ticket_count = $grouped->mapToGroups(function ($item, $key) {
             return ["offense_".$item['tickets_count'] => $item['id']];

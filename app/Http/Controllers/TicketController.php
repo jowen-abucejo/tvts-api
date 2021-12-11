@@ -205,6 +205,7 @@ class TicketController extends Controller
         $data->violator_count = app('\App\Http\Controllers\ViolatorController')->groupByAndCount($request);
         return response()->json([
             "data" => $data,
+            "all_ticket_count" => Ticket::count()
         ]);
     }
 

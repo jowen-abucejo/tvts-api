@@ -136,10 +136,12 @@ class TicketController extends Controller
             $ticket_count  = Ticket::where(
                 'datetime_of_apprehension', '>=', $start_date
             )->where('datetime_of_apprehension', '<=', $end_date
-            )->groupBy('day')->orderBy('day', 'ASC')->get(array(
+            )->groupBy(['day_order', 'day'])->orderBy('day_order', 'ASC')->get(array(
                 // DB::raw('date_format(datetime_of_apprehension, "%b-%d") as day'),
                 DB::raw("to_char(datetime_of_apprehension, 'Mon-DD') as day"),
-                DB::raw('COUNT(*) as "total_tickets"')
+                DB::raw('COUNT(*) as "total_tickets"'),
+                 // DB::raw("date_format(datetime_of_apprehension, '%Y-%m-%d') as day_order")//for mysql
+                 DB::raw("to_char(datetime_of_apprehension, 'YYYY-MM-DD') as day_order")//for posgresql
                 )
             );
             if(count($ticket_count) >= 5){
@@ -160,11 +162,14 @@ class TicketController extends Controller
                 'datetime_of_apprehension', '>=', $start_date
             )->where(
                 'datetime_of_apprehension', '<', $end_date
-            )->groupBy('day')->orderBy('day', 'ASC')->get(
+            )->groupBy(['day_order','day'])->orderBy('day_order', 'ASC')->get(
                 array(
                     // DB::raw('date_format(datetime_of_apprehension, "%b-%d") as day'),
                     DB::raw("to_char(datetime_of_apprehension, 'Mon-DD') as day"),
-                    DB::raw('COUNT(*) as "total_tickets"')
+                    DB::raw('COUNT(*) as "total_tickets"'),
+                    // DB::raw("date_format(datetime_of_apprehension, '%Y-%m-%d') as day_order")//for mysql
+                    DB::raw("to_char(datetime_of_apprehension, 'YYYY-MM-DD') as day_order")//for posgresql
+
                 )
             );
             if(count($ticket_count) >= 5){
@@ -180,14 +185,15 @@ class TicketController extends Controller
         }
 
         if(count($data->ticket_count) < 5){
-            $data->ticket_count = Ticket::take(30)->groupBy(['day'])->orderBy('day', 'DESC')->get(
+            $data->ticket_count = Ticket::take(30)->groupBy(['day_order', 'day'])->orderBy('day_order', 'DESC')->get(
                 array(
-                    // DB::raw('date_format(datetime_of_apprehension, "%b-%d-%Y") as day'),
-                    DB::raw("to_char(datetime_of_apprehension, 'Mon-DD-YYYY') as day"),
+                    // DB::raw('date_format(datetime_of_apprehension, "%b-%d-%Y") as day'),//for mysql
+                    DB::raw("to_char(datetime_of_apprehension, 'Mon-DD-YYYY') as day"),//for posgresql
                     DB::raw('COUNT(*) as "total_tickets"'),
-                    // DB::raw('datetime_of_apprehension')
+                    // DB::raw("date_format(datetime_of_apprehension, '%Y-%m-%d') as day_order")//for mysql
+                    DB::raw("to_char(datetime_of_apprehension, 'YYYY-MM-DD') as day_order")//for posgresql
                 )
-            )->sortBy(['day', 'ASC']);
+            )->sortBy(['day_order', 'ASC']);
             $data->date = ["month"=>"Latest", "year"=>''];
             $data->tickets = TicketResource::collection(Ticket::latest(
                 )->take(30)->orderBy('datetime_of_apprehension', 'DESC')->get()

@@ -128,7 +128,7 @@ class TicketController extends Controller
 
     public function groupByDateAndCount(Request $request)
     {
-        $data = (object)["ticket_count"=>[], "date"=>(object)[], "tickets"=>(object)[], "violation_count"=>[]];
+        $data = (object)["ticket_count"=>[], "date"=>(object)[], "tickets"=>(object)[], "violation_count"=>[], "violator_count"=>[]];
 
         if(!$request->month || !$request->year){
             $start_date = now()->startOfMonth()->toDateString();
@@ -137,10 +137,10 @@ class TicketController extends Controller
                 'datetime_of_apprehension', '>=', $start_date
             )->where('datetime_of_apprehension', '<=', $end_date
             )->groupBy(['day_order', 'day'])->orderBy('day_order', 'ASC')->get(array(
-                // DB::raw('date_format(datetime_of_apprehension, "%b-%d") as day'),
-                DB::raw("to_char(datetime_of_apprehension, 'Mon-DD') as day"),
+                // DB::raw('date_format(datetime_of_apprehension, "%b-%d") as day'),//for mysql
+                DB::raw("to_char(datetime_of_apprehension, 'Mon-DD') as day"),//for posgresql
                 DB::raw('COUNT(*) as "total_tickets"'),
-                 // DB::raw("date_format(datetime_of_apprehension, '%Y-%m-%d') as day_order")//for mysql
+                //  DB::raw("date_format(datetime_of_apprehension, '%Y-%m-%d') as day_order")//for mysql
                  DB::raw("to_char(datetime_of_apprehension, 'YYYY-MM-DD') as day_order")//for posgresql
                 )
             );
@@ -164,8 +164,8 @@ class TicketController extends Controller
                 'datetime_of_apprehension', '<', $end_date
             )->groupBy(['day_order','day'])->orderBy('day_order', 'ASC')->get(
                 array(
-                    // DB::raw('date_format(datetime_of_apprehension, "%b-%d") as day'),
-                    DB::raw("to_char(datetime_of_apprehension, 'Mon-DD') as day"),
+                    // DB::raw('date_format(datetime_of_apprehension, "%b-%d") as day'),//for mysql
+                    DB::raw("to_char(datetime_of_apprehension, 'Mon-DD') as day"),//for posgresql
                     DB::raw('COUNT(*) as "total_tickets"'),
                     // DB::raw("date_format(datetime_of_apprehension, '%Y-%m-%d') as day_order")//for mysql
                     DB::raw("to_char(datetime_of_apprehension, 'YYYY-MM-DD') as day_order")//for posgresql
@@ -202,6 +202,7 @@ class TicketController extends Controller
     
         $request->merge(['ticket_ids'=>$data->tickets->pluck('id')]);
         $data->violation_count = app('\App\Http\Controllers\ViolationController')->groupByAndCount($request);
+        $data->violator_count = app('\App\Http\Controllers\ViolatorController')->groupByAndCount($request);
         return response()->json([
             "data" => $data,
         ]);

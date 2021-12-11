@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\ViolatorResource;
+use App\Models\Ticket;
 use App\Models\Violator;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ViolatorController extends Controller
 {
@@ -98,5 +100,29 @@ class ViolatorController extends Controller
     public function destroy(Violator $violator)
     {
         //
+    }
+
+    public function groupByAndCount(Request $request)
+    {
+        $data = (object)['all_violator_ticket_count'=>[], 'violator_ticket_count_within_date'=>[]];
+        $all_ids = Ticket::select('id')->get();
+        $within_date_ids = $request->ticket_ids?? [1];
+
+        $grouped = Violator::select('id' )->withCount('tickets')->whereHas('tickets', function($query) use($within_date_ids) {
+            return $query->whereIn('id', $within_date_ids);
+        })->get();
+
+        $data->violator_ticket_count_within_date = $grouped->mapToGroups(function ($item, $key) {
+            return ["offense_".$item['tickets_count'] => $item['id']];
+        });
+
+        $grouped = Violator::select('id' )->withCount('tickets')->whereHas('tickets', function($query) use($all_ids) {
+            return $query->whereIn('id', $all_ids);
+        })->get();
+
+        $data->all_violator_ticket_count = $grouped->mapToGroups(function ($item, $key) {
+            return ["offense_".$item['tickets_count'] => $item['id']];
+        });
+        return $data;
     }
 }

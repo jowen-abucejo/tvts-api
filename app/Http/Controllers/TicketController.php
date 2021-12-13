@@ -65,12 +65,18 @@ class TicketController extends Controller
             $violation_ids = explode(',',$request->committed_violations);
             $ticket->violations()->attach($violation_ids);
             
-            Nexmo::message()->send([
-                'to'=>"63$ticket->violator->mobile_number",
-                'from'=>'Naic PNP/NTMO',
-                'text'=>"Citation Ticket $ticket->ticket_number was issued to you. Please appear at the Naic PNP/NTMO  within 72 hours to answer the stated charges. 
-                Failing to settle your case within 15 days from date of apprehension will result to the suspension/revocation of your license.",
-            ]);
+            $err='';
+            try {
+                Nexmo::message()->send([
+                    'to'=>"63"+$ticket->violator->mobile_number,
+                    'from'=>'Naic PNP/NTMO',
+                    'text'=>"Citation Ticket $ticket->ticket_number was issued to you. Please appear at the Naic PNP/NTMO  within 72 hours to answer the stated charges. 
+                    Failing to settle your case within 15 days from date of apprehension will result to the suspension/revocation of your license.",
+                ]);
+            } catch (\Throwable $th) {
+                $err = $th->getMessage();
+            }
+           
             return new TicketResource($ticket);
         } else {
             return null;

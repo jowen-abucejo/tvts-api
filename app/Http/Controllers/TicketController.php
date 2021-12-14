@@ -135,10 +135,9 @@ class TicketController extends Controller
     public function groupByDateAndCount(Request $request)
     {
         $data = (object)["ticket_count"=>[], "date"=>(object)[], "tickets"=>(object)[], "violation_count"=>[], "violator_count"=>[]];
-
+        $start_date = now()->startOfMonth()->toDateString();
+        $end_date = now()->endOfMonth()->toDateString();
         if(!$request->month || !$request->year){
-            $start_date = now()->startOfMonth()->toDateString();
-            $end_date = now()->endOfMonth()->toDateString();
             $ticket_count  = Ticket::where(
                 'datetime_of_apprehension', '>=', $start_date
             )->where('datetime_of_apprehension', '<=', $end_date
@@ -188,7 +187,7 @@ class TicketController extends Controller
                     )->orderBy('datetime_of_apprehension', 'DESC')->get()
                 );
             }
-        }
+        }else{}
 
         if(count($data->ticket_count) < 5){
             $data->ticket_count = Ticket::take(30)->groupBy(['day_order', 'day'])->orderBy('day_order', 'DESC')->get(
@@ -201,8 +200,15 @@ class TicketController extends Controller
                 )
             )->sortBy(['day_order', 'ASC']);
             $data->date = ["month"=>"Latest", "year"=>''];
-            $data->tickets = TicketResource::collection(Ticket::latest(
-                )->take(30)->orderBy('datetime_of_apprehension', 'DESC')->get()
+
+            $all_dates= $data->ticket_count->pluck('day_order');
+            $start_date =  Carbon::createFromFormat('Y-m-d', $all_dates[0]);
+            $end_date = Carbon::createFromFormat('Y-m-d', last($all_dates));
+            $data->tickets = TicketResource::collection(Ticket::where(
+                    'datetime_of_apprehension', '>=', $start_date
+                )->where(
+                    'datetime_of_apprehension', '<=', $end_date
+                )->orderBy('datetime_of_apprehension', 'DESC')->get()
             );
         }
     

@@ -203,7 +203,7 @@ class TicketController extends Controller
 
             $all_dates= $data->ticket_count->pluck('day_order');
             $start_date =  Carbon::createFromFormat('Y-m-d', $all_dates[0]);
-            $end_date = Carbon::createFromFormat('Y-m-d', last($all_dates));
+            $end_date = Carbon::createFromFormat('Y-m-d', $all_dates[count($all_dates)-1]);
             $data->tickets = TicketResource::collection(Ticket::where(
                     'datetime_of_apprehension', '>=', $start_date
                 )->where(

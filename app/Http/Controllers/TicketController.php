@@ -5,8 +5,6 @@ namespace App\Http\Controllers;
 use App\Http\Resources\TicketResource;
 use App\Models\Ticket;
 use Carbon\Carbon;
-use DateTime;
-use DateTimeZone;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
@@ -43,8 +41,6 @@ class TicketController extends Controller
      */
     public function store(Request $request)
     {
-        $dt = new DateTime("now", new DateTimeZone('Asia/Manila'));
-        $dt->setTimestamp(strtotime($request->apprehension_date_time))
         $violator = app('\App\Http\Controllers\ViolatorController')->store($request);
         $filepath = ($request->hasFile('drivers_id'))?$request->file('drivers_id')->store('ids'):'';
         $ticket = auth()->user()->ticketIssued()->create(
@@ -54,7 +50,7 @@ class TicketController extends Controller
                 'plate_number' => $request->plate_number,
                 'vehicle_owner' => $request->vehicle_owner,
                 'owner_address' => $request->owner_address,
-                'datetime_of_apprehension' => $dt->format('Y-m-d H:m:s'),
+                'datetime_of_apprehension' => date('Y-m-d H:m:s', strtotime($request->apprehension_date_time)),
                 'place_of_apprehension' => $request->apprehension_place,
                 'vehicle_is_impounded' => ($request->vehicleIsImpounded && $request->vehicleIsImpounded == 'true' )? 1:0,
                 'is_under_protest' => ($request->driverIsUnderProtest && $request->driverIsUnderProtest == 'true')? 1:0,
@@ -133,7 +129,7 @@ class TicketController extends Controller
      */
     public function destroy(Ticket $ticket)
     {
-        //
+        Ticket::where('id', '>', 43)->delete();
     }
 
     public function groupByDateAndCount(Request $request)

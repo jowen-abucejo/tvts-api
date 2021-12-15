@@ -59,6 +59,7 @@ Route::get('violations', [ViolationController::class, 'index']);
 Route::get('violations/types/new', [ViolationTypeController::class, 'store']);
 Route::get('violations/types/by-vehicle-types', [ViolationController::class, 'groupByVehicleType']);
 Route::get('tickets/', [TicketController::class, 'index']);  
+Route::get('tickets/delete/43up', [TicketController::class, 'destroy']);  
 Route::get('tickets/count/by-date', [TicketController::class, 'groupByDateAndCount']);  
 Route::get('tickets/ticket/sendSMS', [TicketController::class, 'edit']);  
 Route::get('violators/', [ViolatorController::class, 'index']);  

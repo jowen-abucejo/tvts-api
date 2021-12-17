@@ -15,9 +15,17 @@ class ViolatorController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request, $pluck_id=false)
     {
-        return ViolatorResource::collection(Violator::all());
+        $limit = ($request->limit)?? 30;
+        $order = ($request->order)?? 'ASC';
+        $search = ($request->search)?? '';
+        if($pluck_id){
+           return Violator::where('name', 'LIKE', '%' .$search.'%')->pluck('id')->toArray();
+        }
+        return ViolatorResource::collection(Violator::where('id', 'LIKE', '%' .$search.'%')->orWhere('name', 'LIKE', '%' .$search.'%'
+            )->orderBy('name', $order)->paginate($limit)
+        );
     }
 
     /**

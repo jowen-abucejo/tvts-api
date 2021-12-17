@@ -27,15 +27,18 @@ class TicketController extends Controller
             if(!empty($violator_ids)){
                 return TicketResource::collection(Ticket::where('id', 'LIKE', '%' .$search.'%'
                     )->orWhere('ticket_number', 'LIKE', '%' .$search.'%'
-                    )->orWhere('datetime_of_apprehension', 'LIKE', '%' .$search.'%'
                     )->orWhereIn('violator_id', $violator_ids
                     )->orderBy('datetime_of_apprehension', $order)->paginate($limit)
                 );
+                
             }
-        } else {
-                return TicketResource::collection(Ticket::where('id', 'LIKE', '%' .$search.'%'
+            return TicketResource::collection(Ticket::where('id', 'LIKE', '%' .$search.'%'
                 )->orWhere('ticket_number', 'LIKE', '%' .$search.'%'
-                )->orWhere('datetime_of_apprehension', 'LIKE', '%' .$search.'%'
+                )->orderBy('datetime_of_apprehension', $order)->paginate($limit)
+            );
+        } else {
+            return TicketResource::collection(Ticket::where('id', 'LIKE', '%' .$search.'%'
+                )->orWhere('ticket_number', 'LIKE', '%' .$search.'%'
                 )->orderBy('datetime_of_apprehension', $order)->paginate($limit)
             );
         }

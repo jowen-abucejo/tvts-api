@@ -23,9 +23,7 @@ class ViolatorController extends Controller
         if($pluck_id){
            return Violator::where('name', 'LIKE', '%' .$search.'%')->pluck('id')->toArray();
         }
-        return ViolatorResource::collection(Violator::where('id', 'LIKE', '%' .$search.'%')->orWhere('name', 'LIKE', '%' .$search.'%'
-            )->orderBy('name', $order)->paginate($limit)
-        );
+        return ViolatorResource::collection(Violator::all());
     }
 
     /**

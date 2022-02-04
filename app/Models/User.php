@@ -21,7 +21,6 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'username',
-        'email',
         'password',
         'user_type',
     ];
@@ -41,9 +40,9 @@ class User extends Authenticatable
      *
      * @var array
      */
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-    ];
+    // protected $casts = [
+    //     'email_verified_at' => 'datetime',
+    // ];
 
 
     /**
@@ -59,6 +58,13 @@ class User extends Authenticatable
 
     public function isAdmin(){
         if($this->user_type == "admin"){
+            return true;
+        }
+        return false;
+    }
+
+    public function isTreasury(){
+        if($this->user_type == "treasury" || $this->user_type == "admin"){
             return true;
         }
         return false;

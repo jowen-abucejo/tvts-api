@@ -17,16 +17,9 @@ class Ticket extends Model
     protected $fillable = [
         'ticket_number',
         'violator_id',
+        'offense_number',
         'vehicle_type',
-        'plate_number',
-        'vehicle_owner',
-        'owner_address',
         'datetime_of_apprehension',
-        'place_of_apprehension',
-        'vehicle_is_impounded',
-        'is_under_protest',
-        'license_is_confiscated',
-        'document_signature',
         'issued_by',
         'payment_id',
     ];
@@ -71,5 +64,15 @@ class Ticket extends Model
     public function payment()
     {
         return $this->hasOne(Payment::class);
+    }
+    
+    /**
+     * Get all of the extra properties for the Ticket
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function extraProperties()
+    {
+        return $this->hasMany(TicketExtraProperty::class);
     }
 }

@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schema;
 
 class CreateViolationViolationTypeTable extends Migration
@@ -17,6 +18,11 @@ class CreateViolationViolationTypeTable extends Migration
             $table->foreignId('violation_id');
             $table->foreignId('violation_type_id');
         });
+
+        Artisan::call( 'db:seed', [
+            '--class' => 'ViolationSeeder',
+            '--force' => true ]
+        );
     }
 
     /**

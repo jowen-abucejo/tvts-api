@@ -7,7 +7,9 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
@@ -74,12 +76,34 @@ class UserController extends Controller
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\User  $violationType
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, User $violationType)
+    public function update(Request $request)
     {
-        //
+        $user = $request->user();
+        // $ignoreSelf = ($user->id)?? 0;
+        // $this->validate($request, [
+        //     'password' => 'required',
+        //     'new_password' => 'required|confirmed',
+        //     'username' => [
+        //         'required',
+        //         'string',
+        //         Rule::unique('users')->where(function ($query) use ($request) {
+        //             return $query
+        //                 ->where('username', $request->username);
+        //         })->ignore($ignoreSelf),
+        //     ],
+        // ]);  
+        $password_match_user = $this->checkPasswordMatch($request, $user)->getData();
+        if($password_match_user->password_match_status){
+            $user->update([
+                "username" => $request->username,
+                "password" => Hash::make($request->new_password)
+            ]);
+            $user->save();
+            return response()->json(["update_success" => true]);
+        }
+        return response()->json(["update_success" => false]);
     }
 
     /**
@@ -95,7 +119,9 @@ class UserController extends Controller
 
     public function logout(Request $request)
     {
-        $request->user()->token()->revoke();
+        $user = $request->user();
+        //revoked all previous token
+        $user->token()->revoke();
         return response()->json([
             'message' => 'Logout Success'
         ]);
@@ -109,17 +135,31 @@ class UserController extends Controller
         if (Auth::attempt($credentials)) {
             // Authentication passed...
              $user = Auth::user();
+             
+             //revoked all previous token
+             DB::table('oauth_access_tokens')
+            ->where('user_id', '=', $user->id)
+            ->update([
+                'revoked' => true
+            ]);
              $token = $user->createToken($user->username);
              $expiration = $token->token->expires_at->diffInSeconds(Carbon::now());
 
             return response()->json(
                 [
+                    "user_type" => $user->user_type,
                     "access_token" => $token->accessToken,
                     "token_type" => "Bearer",
                     "expires_in" => $expiration
                 ]
             );
         }
-        return response()->json(["error" => "invalid_credentials", "message" => "The user credentials were incorrect."], 401); 
+        return response()->json(["error" => "Login Failed!", "message" => "The user credentials were incorrect."], 401); 
+    }
+
+    public function checkPasswordMatch(Request $request, $user = null)
+    {
+        $user = $user ?? $request->user();
+        return response()->json(["password_match_status" => Hash::check($request->password, $user->password)]);
     }
 }

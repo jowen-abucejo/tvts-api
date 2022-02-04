@@ -3,18 +3,22 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\TicketResource;
+use App\Mail\TicketIssued;
 use App\Models\Ticket;
 use Carbon\Carbon;
 use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Nexmo\Laravel\Facade\Nexmo;
 class TicketController extends Controller
 {
     /**
      * Display a listing of the resource.
      *
+     * @param boolean $search_with_violator
      * @return \Illuminate\Http\Response
      */
     public function index(Request $request, $search_with_violator = true)
@@ -62,62 +66,92 @@ class TicketController extends Controller
      */
     public function store(Request $request)
     {
-        $violator = app('\App\Http\Controllers\ViolatorController')->store($request);
-        $filepath = ($request->hasFile('drivers_id'))?$request->file('drivers_id')->store('ids'):'';
-        $date = new DateTime($request->apprehension_datetime);
-        $ticket = auth()->user()->ticketIssued()->create(
-            [
-                'violator_id' => $violator->id,
-                'vehicle_type' => $request->vehicle_type,
-                'plate_number' => $request->plate_number,
-                'vehicle_owner' => $request->vehicle_owner,
-                'owner_address' => $request->owner_address,
-                'datetime_of_apprehension' => $date->format('Y-m-d H:i:s'),
-                'place_of_apprehension' => $request->apprehension_place,
-                'vehicle_is_impounded' => ($request->vehicleIsImpounded && $request->vehicleIsImpounded == 'true' )? 1:0,
-                'is_under_protest' => ($request->driverIsUnderProtest && $request->driverIsUnderProtest == 'true')? 1:0,
-                'license_is_confiscated' => ($request->licenseIsConfiscated && $request->licenseIsConfiscated == 'true')? 1:0,
-                'document_signature' => $filepath,
-            ]
-        );
+        $violator_id = $request->violator_id ?? null;
+        $violator = app('\App\Http\Controllers\ViolatorController')->store($request, $violator_id);
+        // $filepath = ($request->hasFile('drivers_id'))?$request->file('drivers_id')->store('ids'):'';
+        $ticket_extra_properties = app('\App\Http\Controllers\ExtraPropertyController')->index($request, 'ticket');
+        $date = $request->apprehension_datetime? new DateTime($request->apprehension_datetime): now();
+        if(!$violator) return response('Violator is Null'+$violator);
+        $ticket = 
+            $violator && $violator->id ? 
+            auth()->user()->ticketIssued()->create(
+                [
+                    'violator_id' => $violator->id,
+                    'offense_number' => intval($violator->tickets_count) + 1,
+                    'vehicle_type' => $request->vehicle_type,
+                    'datetime_of_apprehension' => $date->format('Y-m-d H:i:s'),
+                ]
+            ) 
+            : null;
         if($ticket){
-            $ticket->ticket_number = "#$ticket->id";
+            $ticket->ticket_number = "TN$ticket->id";
             $ticket->save();
 
             $violation_ids = explode(',',$request->committed_violations);
             $ticket->violations()->attach($violation_ids);
+
+            foreach ($ticket_extra_properties as $ext) {
+                if($ext->data_type == 'image'){
+                    $key = $ext->property.'';
+                    $file = ($request->hasFile($key))? $request->file($key) : null;
+                    $filepath = ($file)? $file->store($key.'_'.$ext->id) : 'NA';
+                    $ticket->extraProperties()->create([
+                        'extra_property_id' => $ext->id,
+                        'property_value' => $filepath,
+                    ]);
+                } else {
+                    $ticket->extraProperties()->create([
+                        'extra_property_id' => $ext->id,
+                        'property_value' => $request->input($ext->property),
+                    ]);
+                }
+            }
             
             $err='';
             try {
-                Nexmo::message()->send([
-                    'to'=>"63".$ticket->violator->mobile_number,
-                    'from'=>'Naic PNP/NTMO',
-                    'text'=>"Citation Ticket $ticket->ticket_number was issued to you. Please appear at the Naic PNP/NTMO  within 72 hours to answer the stated charges. 
-                    Failing to settle your case within 15 days from date of apprehension will result to the suspension/revocation of your license.",
-                ]);
+                $mobile = $ticket->with(['violator.extraProperties' => function ($query) {
+                    $query->whereRelation('propertyDescription','property', 'mobile_number');
+                }])->first()->violator->extraProperties[0]->property_value;
+                
+                if($mobile){
+                    // Nexmo::message()->send([
+                    //     'to'=>"63".$mobile,
+                    //     'from'=>'Naic PNP/NTMO',
+                    //     'text'=>"Citation Ticket $ticket->ticket_number was issued to you. Please appear at the Naic PNP/NTMO  within 72 hours to answer the stated charges.Failing to settle your case within 15 days from date of apprehension will result to the suspension/revocation of your license.",
+                    // ]);
+                }
+            } catch (\Throwable $th) {
+                $err = $th->getMessage();
+            }
+
+            try {
+                $email = $ticket->with(['violator.extraProperties' => function ($query) {
+                    $query->whereRelation('propertyDescription','property', 'email_address');
+                }])->first()->violator->extraProperties[0]->property_value;
+
             } catch (\Throwable $th) {
                 $err = $th->getMessage();
             }
            
             return new TicketResource($ticket);
         } else {
-            return null;
+            return response('Ticket is Null');
         }
     }
 
     /**
      * Display the specified resource.
      *
-     * @param  \App\Models\Ticket  $ticket
+     * @param  string|null $ticket_number
      * @return \Illuminate\Http\Response
      */
-    public function show(Request $request, $ticket_id = null)
+    public function show(Request $request, $ticket_number = null)
     {
-        $ticket_number = str_replace('#', '', $request->ticket_number);
-        $ticket = ($ticket_id)? Ticket::find($ticket_id) : Ticket::where('ticket_number', "#$ticket_number")->first();
+        $ticket = ($ticket_number)? Ticket::where('ticket_number', "$ticket_number")->first() : null;
         if($ticket)
             return new TicketResource($ticket);
-        return response(null, );
+
+        return response(null);
     }
 
     /**
@@ -151,9 +185,12 @@ class TicketController extends Controller
      */
     public function destroy(Ticket $ticket)
     {
-        Ticket::where('id', '>', 43)->delete();
+
     }
 
+    /**
+     * Get ticket count for each day within the given period of time
+     */
     public function groupByDateAndCount(Request $request)
     {
         $data = (object)["ticket_count"=>[], "date"=>(object)[], "tickets"=>(object)[], "violation_count"=>[], "violator_count"=>[]];
@@ -212,15 +249,23 @@ class TicketController extends Controller
         }else{}
 
         if(count($data->ticket_count) < 5){
-            $data->ticket_count = Ticket::take(30)->groupBy(['day_order', 'day'])->orderBy('day_order', 'DESC')->get(
-                array(
-                    // DB::raw('date_format(datetime_of_apprehension, "%b-%d-%Y") as day'),//for mysql
-                    DB::raw("to_char(datetime_of_apprehension, 'Mon-DD-YYYY') as day"),//for posgresql
-                    DB::raw('COUNT(*) as "total_tickets"'),
-                    // DB::raw("date_format(datetime_of_apprehension, '%Y-%m-%d') as day_order")//for mysql
-                    DB::raw("to_char(datetime_of_apprehension, 'YYYY-MM-DD') as day_order")//for posgresql
-                )
-            )->sortBy(['day_order', 'ASC']);
+            if(env('DB_CONNECTION') == 'pgsql'){
+                $data->ticket_count = Ticket::take(30)->groupBy(['day_order', 'day'])->orderBy('day_order', 'DESC')->get(
+                    array(
+                        DB::raw("to_char(datetime_of_apprehension, 'Mon-DD-YYYY') as day"),//for posgresql
+                        DB::raw('COUNT(*) as "total_tickets"'),
+                        DB::raw("to_char(datetime_of_apprehension, 'YYYY-MM-DD') as day_order")//for posgresql
+                    )
+                )->sortBy(['day_order', 'ASC']);
+            } else {
+                    $data->ticket_count = Ticket::take(30)->groupBy(['day_order', 'day'])->orderBy('day_order', 'DESC')->get(
+                        array(
+                            DB::raw('date_format(datetime_of_apprehension, "%b-%d-%Y") as day'),//for mysql
+                            DB::raw('COUNT(*) as "total_tickets"'),
+                            DB::raw("date_format(datetime_of_apprehension, '%Y-%m-%d') as day_order")//for mysql
+                        )
+                    )->sortBy(['day_order', 'ASC']);
+            }
             $data->date = ["month"=>"Latest", "year"=>''];
 
             $all_dates= $data->ticket_count->pluck('day_order');
@@ -241,6 +286,29 @@ class TicketController extends Controller
             "data" => $data,
             "all_ticket_count" => Ticket::count()
         ]);
+    }
+
+    public function emailQRCode(Request $request, $ticket_number)
+    {
+        $ticket = Ticket::with(['violator.extraProperties' => function ($query) {
+            $query->whereRelation('propertyDescription','property', 'email_address');
+        }])->where('ticket_number', $ticket_number)->first();
+        $hasQR = $request->hasFile('qrImage');
+        if($ticket && $hasQR){
+           try {
+            $qr_path = $request->file('qrImage')->store('temp');
+            $new_email = new TicketIssued($ticket->ticket_number, $qr_path);
+            Mail::to($ticket->violator->extraProperties[0]->property_value, $ticket->violator->first_name.' '. $ticket->violator->last_name)->send($new_email);
+            Storage::delete($qr_path);
+            return response()->json(["email_complete" => true]);           
+            } catch (\Throwable $th) {
+                return response()->json(["email_complete" => false]);           
+            }
+        }
+        
+        if(!$hasQR)
+            return response()->json(["error" => "QR Code Not Found", "message" => "No QR Code image received."],); 
+        return response()->json(["error" => "Ticket Not Found!", "message" => "Ticket $ticket_number not found."],); 
     }
 
 }

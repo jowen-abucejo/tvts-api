@@ -5,8 +5,9 @@ namespace App\Http\Controllers;
 use App\Http\Resources\ViolatorResource;
 use App\Models\Ticket;
 use App\Models\Violator;
+use DateTime;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class ViolatorController extends Controller
 {
@@ -21,9 +22,9 @@ class ViolatorController extends Controller
         $order = ($request->order)?? 'ASC';
         $search = ($request->search)?? '';
         if($pluck_id){
-           return Violator::where('name', 'LIKE', '%' .$search.'%')->pluck('id')->toArray();
+           return Violator::where('last_name', 'LIKE', '%' .$search.'%')->orWhere('first_name', 'LIKE', '%' .$search.'%')->orWhere('middle', 'LIKE', '%' .$search.'%')->pluck('id')->toArray();
         }
-        return ViolatorResource::collection(Violator::all());
+        return ViolatorResource::collection(Violator::withCount('tickets')->get());
     }
 
     /**
@@ -42,23 +43,79 @@ class ViolatorController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(Request $request, $violator_id = null)
     {
-        $name = "$request->first_name, $request->middle_name, $request->last_name";
-        $violator = (!$request->license_number)? Violator::where('name', $name)->first(): null;
-        $violator = ($violator)?? Violator::updateOrCreate(
-            [
-                'license_number' => $request->license_number
-            ],
-            [
-                'name' => $name,
-                'address' => $request->address,
-                'birth_date' => date('Y-m-d', strtotime($request->birth_date)),
-                'mobile_number' => $request->mobile_number,
-                'parent_and_license' => $request->parent_and_license,
-            ]
-        );
+        $violator = null;
+        $l = Str::title(preg_replace('!\s+!',' ', $request->last_name));
+        $f = Str::title(preg_replace('!\s+!',' ', $request->first_name));
+        $m = ($request->middle_name)? Str::title(preg_replace('!\s+!',' ', $request->middle_name)) : '';
+        $birth_date = new DateTime($request->birth_date);
+        if($violator_id && intval($violator_id)){
+            $violator = Violator::withCount('tickets')->find($violator_id);
+            $violator->update([
+                'license_number' => $request->license_number,
+                'last_name' => $l,
+                'first_name' => $f,
+                'middle_name' => $m,
+                'birth_date' => $birth_date->format('Y-m-d')
+            ]);
+            $violator->save();
+        } else if(!$request->license_number){
+            // $violator = Violator::withCount('tickets')->where('last_name', $l)->where('first_name', $f)->where('middle_name', $m)->where('birth_date', $birth_date)->first();
+            $violator = Violator::withCount('tickets')->updateOrCreate(
+                [
+                    'last_name' => $l,
+                    'first_name' => $f,
+                    'middle_name' => $m,
+                    'birth_date' => $birth_date->format('Y-m-d'),
+                ],
+                [
+                    'license_number' => $request->license_number
+                ]
+            );
+        } else if($request->license_number) {
+            $violator = Violator::withCount('tickets')->updateOrCreate(
+                [
+                    'license_number' => $request->license_number
+                ],
+                [
+                    'last_name' => $l,
+                    'first_name' => $f,
+                    'middle_name' => $m,
+                    'birth_date' => $birth_date->format('Y-m-d'),
+                ]
+            );
+        }
+        $violator_extra_properties = app('\App\Http\Controllers\ExtraPropertyController')->index($request, 'violator');
+
+        if($violator){
+            foreach ($violator_extra_properties as $ext) {
+                if($ext->data_type == 'image'){
+                    $filepath = ($request->hasFile($ext->property))?$request->file($ext->property)->store($ext->property+$ext->id+'') : null;
+                    $violator->extraProperties()->updateOrCreate(
+                        [
+                            'extra_property_id' => $ext->id,
+                        ],
+                        [
+                            'property_value' => $filepath,
+                        ]
+                    );
+                } else {
+                    $violator->extraProperties()->updateOrCreate(
+                        [
+                            'extra_property_id' => $ext->id,
+                        ],
+                        [
+                            'property_value' => $request->input($ext->property),
+                        ]
+                    );
+                }
+            }
+        }
+
         return $violator;
+        // return new ViolatorResource($violator);
+
     }
 
     /**
@@ -68,7 +125,19 @@ class ViolatorController extends Controller
      */
     public function show(Request $request, $violator_id = null)
     {
-        $violator = ($violator_id)? Violator::find($violator_id) : Violator::where('license_number', $request->license_number)->first();
+        $violator = null;
+        if($violator_id){
+            $violator = Violator::withCount('tickets')->find($violator_id);
+        } else if (!$request->license_number && ($request->first_name && $request->last_name && $request->birth_date)){
+            $l = Str::title(preg_replace('!\s+!',' ', $request->last_name));
+            $f = Str::title(preg_replace('!\s+!',' ', $request->first_name));
+            $m = ($request->middle_name)? Str::title(preg_replace('!\s+!',' ', $request->middle_name)) : '';
+            $birth_date = new DateTime($request->birth_date);
+            // $violator = Violator::withCount('tickets')->where('last_name', $l)->where('first_name', $f)->where('middle_name', $m)->where('birth_date', $birth_date->format('Y-m-d'))->first();
+            $violator = Violator::withCount('tickets')->where([['last_name', $l],['first_name', $f],['middle_name', $m],['birth_date', $birth_date->format('Y-m-d')]])->first();
+        } else if ($request->license_number){
+            $violator = Violator::withCount('tickets')->where('license_number', $request->license_number)->first();
+        } else {}
         if($violator)
             return new ViolatorResource($violator);
         return response(null, );

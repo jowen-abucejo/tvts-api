@@ -15,12 +15,11 @@ class Violator extends Model
      * @var string[]
      */
     protected $fillable = [
-        'name',
-        'address',
+        'last_name',
+        'first_name',
+        'middle_name',
         'birth_date',
         'license_number',
-        'mobile_number',
-        'parent_and_license',
     ];
 
     /**
@@ -31,5 +30,15 @@ class Violator extends Model
     public function tickets()
     {
         return $this->hasMany(Ticket::class);
+    }
+
+     /**
+     * Get all of the extra properties for the Violator
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function extraProperties()
+    {
+        return $this->hasMany(ViolatorExtraProperty::class);
     }
 }

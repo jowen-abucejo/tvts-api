@@ -17,17 +17,9 @@ class CreateTicketsTable extends Migration
             $table->id();
             $table->string('ticket_number')->nullable()->unique();
             $table->foreignId('violator_id')->references('id')->on('violators');
+            $table->integer('offense_number');
             $table->string('vehicle_type', 10);
-            $table->string('plate_number', 20);
-            
-            $table->string('vehicle_owner');
-            $table->string('owner_address');
             $table->dateTime('datetime_of_apprehension');
-            $table->string('place_of_apprehension');
-            $table->boolean('vehicle_is_impounded')->nullable()->default(0);
-            $table->boolean('is_under_protest')->nullable()->default(0);
-            $table->boolean('license_is_confiscated')->nullable()->default(0);
-            $table->string('document_signature')->nullable();   
             $table->foreignId('issued_by')->references('id')->on('users');
             $table->foreignId('payment_id')->nullable()->references('id')->on('payments');           
             $table->timestamps();

@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateViolatorsTable extends Migration
+class CreateViolatorExtraPropertiesTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,13 +13,11 @@ class CreateViolatorsTable extends Migration
      */
     public function up()
     {
-        Schema::create('violators', function (Blueprint $table) {
+        Schema::create('violator_extra_properties', function (Blueprint $table) {
             $table->id();
-            $table->string('last_name');
-            $table->string('first_name');
-            $table->string('middle_name')->nullable();
-            $table->date('birth_date');
-            $table->string('license_number')->nullable();
+            $table->foreignId("violator_id");
+            $table->foreignId("extra_property_id");
+            $table->string("property_value")->nullable();
             $table->timestamps();
         });
     }
@@ -31,6 +29,6 @@ class CreateViolatorsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('violators');
+        Schema::dropIfExists('violator_extra_properties');
     }
 }

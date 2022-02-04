@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schema;
 
 class CreateViolationTypesTable extends Migration
@@ -21,6 +22,11 @@ class CreateViolationTypesTable extends Migration
             $table->timestamps();
             $table->softDeletes();
         });
+
+        Artisan::call( 'db:seed', [
+            '--class' => 'ViolationTypeSeeder',
+            '--force' => true ]
+        );
     }
 
     /**

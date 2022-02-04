@@ -18,19 +18,13 @@ class TicketResource extends JsonResource
             "id" => $this->id,
             "number" => $this->ticket_number,
             "violator" => new ViolatorResource($this->violator),
+            "offense_number" => $this->offense_number,
             "vehicle_type" => $this->vehicle_type,
-            "plate_number" => $this->plate_number,
-            "vehicle_owner" => $this->vehicle_owner,
-            'owner_address'=>$this->owner_address,
             "apprehension_datetime" => $this->datetime_of_apprehension,
-            "apprehension_place" => $this->place_of_apprehension,
-            'vehicle_is_impounded' => $this->vehicle_is_impounded,
-            'is_under_protest' => $this->is_under_protest,
-            'license_is_confiscated' => $this->license_is_confiscated,
             "issued_by" => $this->issuedBy->name,
             "violations" => ViolationResource::collection($this->violations),
-            // "payment_id" => $this->when(Auth::user()->isAdmin()), $this->payment_id,
-
+            // "payment_id" => $this->when(auth()->user()->isAdmin(), $this->payment_id),
+            "extra_properties" => TicketExtraPropertyResource::collection($this->extraProperties)
         ];
     }
 }

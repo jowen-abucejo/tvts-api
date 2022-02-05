@@ -129,8 +129,13 @@ class UserController extends Controller
 
     public function login(Request $request)
     {
-        $credentials = $request->only('username', 'password');
-        // $credentials = ["username"=>"admin123", "password"=>"admin"];
+        $request->validate(
+            [
+                'username' => 'required|regex:/^[a-zA-ZÑñ0-9@$_.]+$/',
+                'password' => 'required|regex:/^[a-zA-ZÑñ0-9@$_.]+$/',
+            ]
+        );
+        $credentials = $request->only('username', 'password');        
 
         if (Auth::attempt($credentials)) {
             // Authentication passed...

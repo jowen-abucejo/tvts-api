@@ -302,7 +302,7 @@ class TicketController extends Controller
             Storage::delete($qr_path);
             return response()->json(["email_complete" => true]);           
             } catch (\Throwable $th) {
-                return response()->json(["email_complete" => false, "error" => $th]);           
+                return response()->json(["email_complete" => false, "error" => json_encode($th)]);           
             }
         }
         

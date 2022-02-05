@@ -318,11 +318,11 @@ class TicketController extends Controller
         if (Storage::exists($real_path)) {
             $metaData = Storage::getMetaData($real_path);
             if($metaData == false) {
-                return response(null);
+                return response()->json(["error" => "File Not Found!"], 404);
             }
             return response()->file(storage_path('/app').'/'.($real_path));
         }
-        return response(null);
+        return response()->json(["error" => "File Not Found!"], 404);
 
     }
 

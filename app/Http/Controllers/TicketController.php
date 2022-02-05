@@ -302,13 +302,27 @@ class TicketController extends Controller
             Storage::delete($qr_path);
             return response()->json(["email_complete" => true]);           
             } catch (\Throwable $th) {
-                return response()->json(["email_complete" => false]);           
+                return response()->json(["email_complete" => false, "error" => json_encode($th)]);           
             }
         }
         
         if(!$hasQR)
             return response()->json(["error" => "QR Code Not Found", "message" => "No QR Code image received."],); 
         return response()->json(["error" => "Ticket Not Found!", "message" => "Ticket $ticket_number not found."],); 
+    }
+    
+    public function testShowImage(Request $request, $image_path)
+    {
+        $real_path = str_replace(' ','/', $image_path);
+        if (Storage::exists($real_path)) {
+            $metaData = Storage::getMetaData($real_path);
+            if($metaData == false) {
+                return response(null);
+            }
+            return response()->file(storage_path('/app').'/'.($real_path));
+        }
+        return response(null);
+
     }
 
 }

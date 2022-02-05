@@ -56,6 +56,9 @@ Route::middleware(['auth:api'])->prefix(env('API_VERSION', 'v1'))->group(functio
     
     Route::get('forms/ext/fields/{property_owner?}', [ExtraPropertyController::class, 'index']);  
 
+    Route::get('resources/image/{image_path}', [TicketController::class, 'testShowImage']);  
+
+
 });
 
 //!START OF TEST ROUTES
@@ -69,12 +72,13 @@ Route::get('tickets/', [TicketController::class, 'index']);
 Route::get('tickets/ticket/{ticket_number?}', [TicketController::class, 'show']);
 Route::get('tickets/count/by-date', [TicketController::class, 'groupByDateAndCount']);  
 Route::get('tickets/ticket/sendSMS', [TicketController::class, 'edit']);  
+Route::get('tickets/email-qr/{ticket_number?}', [TicketController::class, 'emailQRCode'] );
+Route::get('resources/image/{image_path}', [TicketController::class, 'testShowImage']);  
 Route::get('violators/', [ViolatorController::class, 'index']);
 Route::get('violators/violator/{id}', [ViolatorController::class, 'show']);  
 Route::get('violations/count/by-ticket', [ViolationController::class, 'groupByAndCount']);
 Route::get('violators/count/by-ticket', [ViolatorController::class, 'groupByAndCount']);
 Route::get('forms/ext/fields/{property_owner?}', [ExtraPropertyController::class, 'index']);  
-Route::get('tickets/email-qr/{ticket_number?}', [TicketController::class, 'emailQRCode'] );
 
 //!END OF TEST ROUTES
 

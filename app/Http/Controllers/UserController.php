@@ -128,10 +128,13 @@ class UserController extends Controller
     }
 
     public function login(Request $request)
-    {
-        if(!$request->api_version || $request->api_version != env('API_VERSION')){
-            return response([], 0);
+    {   
+        $active_version = env('API_VERSION');
+        $version = $request->api_version;
+        if(!$version || $version !== $active_version){
+            return response()->json(["error" => "Login Failed!", "message" => "Application not properly configured."], 401);
         }
+
         $request->validate(
             [
                 'username' => 'required|regex:/^[a-zA-ZÑñ0-9@$_.]+$/',

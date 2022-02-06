@@ -24,7 +24,7 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::middleware(['auth:api'])->prefix(env('API_VERSION', 'v1'))->group(function () {
+Route::middleware(['auth:api'])->prefix(env('API_VERSION'))->group(function () {
     Route::get('users/', [UserController::class, 'index']);
     Route::post('users/new/{violator_id?}', [UserController::class, 'store']);  
     Route::post('users/user', [UserController::class, 'update']);  

@@ -129,6 +129,9 @@ class UserController extends Controller
 
     public function login(Request $request)
     {
+        if(!$request->api_version || $request->api_version != env('API_VERSION')){
+            return response([], 0);
+        }
         $request->validate(
             [
                 'username' => 'required|regex:/^[a-zA-ZÑñ0-9@$_.]+$/',

@@ -293,23 +293,26 @@ class TicketController extends Controller
         $ticket = Ticket::with(['violator.extraProperties' => function ($query) {
             $query->whereRelation('propertyDescription','property', 'email_address');
         }])->where('ticket_number', $ticket_number)->first();
+        $email_address = ($ticket && count($ticket->violator->extraProperties) > 0)? $ticket->violator->extraProperties[0]->property_value : null;
         $hasQR = $request->hasFile('qrImage');
-        if($ticket && $hasQR){
+        if($ticket && $hasQR && $email_address){
            try {
             $qr_path = $request->file('qrImage')->store('temp');
             $new_email = new TicketIssued($ticket->ticket_number, $qr_path);
-            Mail::to($ticket->violator->extraProperties[0]->property_value, $ticket->violator->first_name.' '. $ticket->violator->last_name)->send($new_email);
+            Mail::to($email_address, $ticket->violator->first_name.' '. $ticket->violator->last_name)->send($new_email);
             Storage::delete($qr_path);
             return response()->json(["email_complete" => true]);           
             } catch (\Throwable $th) {
-                // return response()->json(["email_complete" => false, "error" => $th]); 
-                return response($th);
+                return response()->json(["email_complete" => false]); 
             }
         }
         
         if(!$hasQR)
             return response()->json(["error" => "QR Code Not Found", "message" => "No QR Code image received."],); 
-        return response()->json(["error" => "Ticket Not Found!", "message" => "Ticket $ticket_number not found."],); 
+        else if(!$email_address)
+            return response()->json(["error" => "Email Address Not Found", "message" => "No receiver email address found."],); 
+        else
+            return response()->json(["error" => "Ticket Not Found!", "message" => "Ticket $ticket_number not found."],); 
     }
     
     public function testShowImage(Request $request, $image_path)

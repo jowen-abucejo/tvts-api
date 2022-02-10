@@ -24,8 +24,6 @@ class CreateTicketExtraPropertiesTable extends Migration
 
         if ( \App\Models\User::count() < 1 )
         {
-            
-            Artisan::call( 'passport:install');
             Artisan::call( 'db:seed', [
                 '--class' => 'DatabaseSeeder',
                 '--force' => true ]

@@ -26,25 +26,49 @@ class TicketController extends Controller
         $limit = ($request->limit)?? 30;
         $order = ($request->order)?? 'DESC';
         $search = ($request->search)?? '';
-        if($search_with_violator && !empty($search)){
-            $violator_ids = app('\App\Http\Controllers\ViolatorController')->index($request, true);
-            if(!empty($violator_ids)){
+        if(env('DB_CONNECTION') == 'mysql') {
+            if($search_with_violator && !empty($search)){
+                $violator_ids = app('\App\Http\Controllers\ViolatorController')->index($request, true);
+                if(!empty($violator_ids)){
+                    return TicketResource::collection(Ticket::where('id', 'LIKE', '%'.$search.'%'
+                        )->orWhere('ticket_number', 'LIKE', '%'.$search.'%'
+                        )->orWhereIn('violator_id', $violator_ids
+                        )->orderBy('datetime_of_apprehension', $order)->paginate($limit)
+                    );
+                    
+                }
                 return TicketResource::collection(Ticket::where('id', 'LIKE', '%'.$search.'%'
                     )->orWhere('ticket_number', 'LIKE', '%'.$search.'%'
-                    )->orWhereIn('violator_id', $violator_ids
                     )->orderBy('datetime_of_apprehension', $order)->paginate($limit)
                 );
-                
+            } else {
+                return TicketResource::collection(Ticket::where('id', 'LIKE', '%' .$search.'%'
+                    )->orWhere('ticket_number', 'LIKE', '%'.$search.'%'
+                    )->orderBy('datetime_of_apprehension', $order)->paginate($limit)
+                );
             }
-            return TicketResource::collection(Ticket::where('id', 'LIKE', '%'.$search.'%'
-                )->orWhere('ticket_number', 'LIKE', '%'.$search.'%'
-                )->orderBy('datetime_of_apprehension', $order)->paginate($limit)
-            );
-        } else {
-            return TicketResource::collection(Ticket::where('id', 'LIKE', '%' .$search.'%'
-                )->orWhere('ticket_number', 'LIKE', '%'.$search.'%'
-                )->orderBy('datetime_of_apprehension', $order)->paginate($limit)
-            );
+        }
+        if(env('DB_CONNECTION') == 'pgsql') {
+            if($search_with_violator && !empty($search)){
+                $violator_ids = app('\App\Http\Controllers\ViolatorController')->index($request, true);
+                if(!empty($violator_ids)){
+                    return TicketResource::collection(Ticket::where('id', 'ILIKE', '%'.$search.'%'
+                        )->orWhere('ticket_number', 'ILIKE', '%'.$search.'%'
+                        )->orWhereIn('violator_id', $violator_ids
+                        )->orderBy('datetime_of_apprehension', $order)->paginate($limit)
+                    );
+                    
+                }
+                return TicketResource::collection(Ticket::where('id', 'ILIKE', '%'.$search.'%'
+                    )->orWhere('ticket_number', 'ILIKE', '%'.$search.'%'
+                    )->orderBy('datetime_of_apprehension', $order)->paginate($limit)
+                );
+            } else {
+                return TicketResource::collection(Ticket::where('id', 'ILIKE', '%' .$search.'%'
+                    )->orWhere('ticket_number', 'ILIKE', '%'.$search.'%'
+                    )->orderBy('datetime_of_apprehension', $order)->paginate($limit)
+                );
+            }
         }
     }
 
@@ -71,7 +95,7 @@ class TicketController extends Controller
         // $filepath = ($request->hasFile('drivers_id'))?$request->file('drivers_id')->store('ids'):'';
         $ticket_extra_properties = app('\App\Http\Controllers\ExtraPropertyController')->index($request, 'ticket');
         $date = $request->apprehension_datetime? new DateTime($request->apprehension_datetime): now();
-        if(!$violator) return response('Violator is Null'+$violator);
+        if(!$violator) return response('Violator is Null');
         $ticket = 
             $violator && $violator->id ? 
             auth()->user()->ticketIssued()->create(

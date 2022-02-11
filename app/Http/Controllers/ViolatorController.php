@@ -22,7 +22,11 @@ class ViolatorController extends Controller
         $order = ($request->order)?? 'ASC';
         $search = ($request->search)?? '';
         if($pluck_id){
-           return Violator::where('last_name', 'LIKE', '%'.$search.'%')->orWhere('first_name', 'LIKE', '%'.$search.'%')->orWhere('middle_name', 'LIKE', '%'.$search.'%')->pluck('id')->toArray();
+           if(env('DB_CONNECTION') == 'mysql')
+                return Violator::where('last_name', 'LIKE', '%'.$search.'%')->orWhere('first_name', 'LIKE', '%'.$search.'%')->orWhere('middle_name', 'LIKE', '%'.$search.'%')->pluck('id')->toArray();
+            if(env('DB_CONNECTION') == 'pgsql') {
+                return Violator::where('last_name', 'ILIKE', '%'.$search.'%')->orWhere('first_name', 'ILIKE', '%'.$search.'%')->orWhere('middle_name', 'ILIKE', '%'.$search.'%')->pluck('id')->toArray();                
+            }
         }
         return ViolatorResource::collection(Violator::withCount('tickets')->get());
     }

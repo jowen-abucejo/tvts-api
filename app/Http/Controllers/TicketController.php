@@ -26,49 +26,27 @@ class TicketController extends Controller
         $limit = ($request->limit)?? 30;
         $order = ($request->order)?? 'DESC';
         $search = ($request->search)?? '';
-        if(env('DB_CONNECTION') == 'mysql') {
-            if($search_with_violator && !empty($search)){
-                $violator_ids = app('\App\Http\Controllers\ViolatorController')->index($request, true);
-                if(!empty($violator_ids)){
-                    return TicketResource::collection(Ticket::where('id', 'LIKE', '%'.$search.'%'
-                        )->orWhere('ticket_number', 'LIKE', '%'.$search.'%'
-                        )->orWhereIn('violator_id', $violator_ids
-                        )->orderBy('datetime_of_apprehension', $order)->paginate($limit)
-                    );
-                    
-                }
-                return TicketResource::collection(Ticket::where('id', 'LIKE', '%'.$search.'%'
-                    )->orWhere('ticket_number', 'LIKE', '%'.$search.'%'
+        $like = (env('DB_CONNECTION') == 'pgsql') ? 'ILIKE' : 'LIKE';
+        if($search_with_violator && !empty($search)){
+            $violator_ids = app('\App\Http\Controllers\ViolatorController')->index($request, true);
+            if(!empty($violator_ids)){
+                return TicketResource::collection(Ticket::where('id', $like, '%'.$search.'%'
+                    )->orWhere('ticket_number', $like, '%'.$search.'%'
+                    )->orWhereIn('violator_id', $violator_ids
                     )->orderBy('datetime_of_apprehension', $order)->paginate($limit)
                 );
-            } else {
-                return TicketResource::collection(Ticket::where('id', 'LIKE', '%' .$search.'%'
-                    )->orWhere('ticket_number', 'LIKE', '%'.$search.'%'
-                    )->orderBy('datetime_of_apprehension', $order)->paginate($limit)
-                );
+                
             }
-        }
-        if(env('DB_CONNECTION') == 'pgsql') {
-            if($search_with_violator && !empty($search)){
-                $violator_ids = app('\App\Http\Controllers\ViolatorController')->index($request, true);
-                if(!empty($violator_ids)){
-                    return TicketResource::collection(Ticket::where('id', 'ILIKE', '%'.$search.'%'
-                        )->orWhere('ticket_number', 'ILIKE', '%'.$search.'%'
-                        )->orWhereIn('violator_id', $violator_ids
-                        )->orderBy('datetime_of_apprehension', $order)->paginate($limit)
-                    );
-                    
-                }
-                return TicketResource::collection(Ticket::where('id', 'ILIKE', '%'.$search.'%'
-                    )->orWhere('ticket_number', 'ILIKE', '%'.$search.'%'
-                    )->orderBy('datetime_of_apprehension', $order)->paginate($limit)
-                );
-            } else {
-                return TicketResource::collection(Ticket::where('id', 'ILIKE', '%' .$search.'%'
-                    )->orWhere('ticket_number', 'ILIKE', '%'.$search.'%'
-                    )->orderBy('datetime_of_apprehension', $order)->paginate($limit)
-                );
-            }
+            return TicketResource::collection(Ticket::where('id', $like, '%'.$search.'%'
+                )->orWhere('ticket_number', $like, '%'.$search.'%'
+                )->orderBy('datetime_of_apprehension', $order)->paginate($limit)
+            );
+        } else {
+            return TicketResource::collection(Ticket::where('id', $like, '%'.$search.'%'
+                )->orWhere('ticket_number', $like, '%'.$search.'%'
+                )->orderBy('datetime_of_apprehension', $order
+                )->paginate($limit)
+            );
         }
     }
 

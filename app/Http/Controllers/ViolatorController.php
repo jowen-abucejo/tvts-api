@@ -21,14 +21,23 @@ class ViolatorController extends Controller
         $limit = ($request->limit)?? 30;
         $order = ($request->order)?? 'ASC';
         $search = ($request->search)?? '';
+        $like = (env('DB_CONNECTION') == 'pgsql') ? 'ILIKE' : 'LIKE';
+
         if($pluck_id){
-           if(env('DB_CONNECTION') == 'mysql')
-                return Violator::where('last_name', 'LIKE', '%'.$search.'%')->orWhere('first_name', 'LIKE', '%'.$search.'%')->orWhere('middle_name', 'LIKE', '%'.$search.'%')->pluck('id')->toArray();
-            if(env('DB_CONNECTION') == 'pgsql') {
-                return Violator::where('last_name', 'ILIKE', '%'.$search.'%')->orWhere('first_name', 'ILIKE', '%'.$search.'%')->orWhere('middle_name', 'ILIKE', '%'.$search.'%')->pluck('id')->toArray();                
-            }
+           return Violator::where('last_name', $like, '%'.$search.'%'
+                )->orWhere('first_name', $like, '%'.$search.'%'
+                )->orWhere('middle_name', $like, '%'.$search.'%'
+                )->pluck('id')->toArray();
         }
-        return ViolatorResource::collection(Violator::withCount('tickets')->get());
+        return ViolatorResource::collection(
+            Violator::withCount('tickets')->where('last_name', $like, '%'.$search.'%'
+                )->orWhere('first_name', $like, '%'.$search.'%'
+                )->orWhere('middle_name', $like, '%'.$search.'%'
+                )->orderBy('last_name', $order
+                )->orderBy('first_name', $order
+                )->orderBy('middle_name', $order
+                )->paginate($limit)
+            );
     }
 
     /**

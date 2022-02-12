@@ -297,7 +297,7 @@ class TicketController extends Controller
         }])->where('ticket_number', $ticket_number)->first();
         $email_address = ($ticket && count($ticket->violator->extraProperties) > 0)? $ticket->violator->extraProperties[0]->property_value : null;
         $hasQR = $request->hasFile('qrImage');
-        if($ticket && $hasQR && $email_address && false){
+        if($ticket && $hasQR && $email_address){
            try {
             $qr_path = $request->file('qrImage')->store('temp');
             $new_email = new TicketIssued($ticket->ticket_number, $qr_path);

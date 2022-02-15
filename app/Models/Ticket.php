@@ -31,7 +31,7 @@ class Ticket extends Model
      */
     public function violations()
     {
-        return $this->belongsToMany(Violation::class);
+        return $this->belongsToMany(Violation::class)->withTrashed();
     }
 
     
@@ -53,7 +53,7 @@ class Ticket extends Model
      */
     public function issuedBy()
     {
-        return $this->belongsTo(User::class, 'issued_by');
+        return $this->belongsTo(User::class, 'issued_by')->withTrashed();
     }
 
     /**

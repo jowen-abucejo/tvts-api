@@ -13,8 +13,11 @@ class ViolationTypeController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
+        if($request->user() && $request->user()->isAdmin()){
+            return ViolationTypeResource::collection(ViolationType::withTrashed()->get());
+        }
         return ViolationTypeResource::collection(ViolationType::all());
     }
 
@@ -36,28 +39,7 @@ class ViolationTypeController extends Controller
      */
     public function store(Request $request)
     {
-        ViolationType::create([
-            'type' => 'Minor',
-            'vehicle_type' => '2-3-wheel',
-            'penalties' => '250,350,500'
-        ]);
-        ViolationType::create([
-            'type' => 'Minor',
-            'vehicle_type' => '4-wheel',
-            'penalties' => '300,500,1000'
-        ]);
-        ViolationType::create([
-            'type' => 'Major',
-            'vehicle_type' => '2-3-wheel',
-            'penalties' => '2500'
-        ]);
-        ViolationType::create([
-            'type' => 'Major',
-            'vehicle_type' => '4-wheel',
-            'penalties' => '2500'
-        ]);
-        // return new ViolationTypeResource($new_violation_type);
-        return ViolationTypeResource::collection(ViolationType::all());
+        
     }
 
     /**

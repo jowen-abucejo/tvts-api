@@ -19,7 +19,8 @@ class ViolationTypeResource extends JsonResource
             "id" => $this->id,
             "type" => $this->type,
             "vehicle_type" => $this->vehicle_type,
-            "penalties" =>explode("," , $this->penalties)
+            "penalties" =>explode("," , $this->penalties),
+            "deleted_at" => $this->deleted_at
         ];
     }
 }

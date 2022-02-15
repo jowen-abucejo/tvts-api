@@ -28,6 +28,6 @@ class ViolationType extends Model
      */
     public function violations()
     {
-        return $this->belongsToMany(Violation::class);
+        return $this->belongsToMany(Violation::class)->withTrashed();
     }
 }

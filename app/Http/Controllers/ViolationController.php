@@ -22,6 +22,9 @@ class ViolationController extends Controller
         if($request->ticket_ids){
             return ViolationResource::collection(Violation::whereIn('id', $request->ticket_ids)->get());
         }
+        if($request->user && $request->user()->isAdmin()){
+            return ViolationResource::collection(Violation::withTrashed()->orderBy('violation')->get());
+        }
         return ViolationResource::collection(Violation::all());
     }
 
@@ -64,9 +67,9 @@ class ViolationController extends Controller
      * @param  \App\Models\Violation  $violation
      * @return \Illuminate\Http\Response
      */
-    public function show(Violation $violation)
+    public function show(Request $request, $id)
     {
-        $v = Violation::find(1);
+        $v = Violation::where('id', $id)->withTrashed()->first();
         return new ViolationResource($v);
     }
 

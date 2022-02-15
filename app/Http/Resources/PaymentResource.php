@@ -15,7 +15,7 @@ class PaymentResource extends JsonResource
     public function toArray($request)
     {
         return [
-            'OR_number'=>$this->OR_number,
+            'or_number'=>$this->OR_number,
             'penalties' =>$this->penalties,
             'total_amount' => $this->total_amount,
         ];

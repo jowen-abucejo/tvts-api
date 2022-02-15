@@ -20,7 +20,7 @@ class ViolationController extends Controller
     public function index(Request $request)
     {
         if($request->ticket_ids){
-            return ViolationResource::collection(Violation::whereIn('id', $request->ticket_ids)->get());
+            return ViolationResource::collection(Violation::whereIn('id', $request->ticket_ids)->withTrashed()->get());
         }
         if($request->user && $request->user()->isAdmin()){
             return ViolationResource::collection(Violation::withTrashed()->orderBy('violation')->get());

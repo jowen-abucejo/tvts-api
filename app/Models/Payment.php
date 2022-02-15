@@ -21,12 +21,12 @@ class Payment extends Model
     ];
 
     /**
-     * The tickets that belong to the Payment
+     * Get the ticket associated with the Payment
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
      */
-    public function tickets()
+    public function ticket()
     {
-        return $this->belongsToMany(Ticket::class);
+        return $this->hasOne(Ticket::class);
     }
 }

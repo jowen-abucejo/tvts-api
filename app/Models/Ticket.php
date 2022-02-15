@@ -57,13 +57,13 @@ class Ticket extends Model
     }
 
     /**
-     * Get the payment associated with the Ticket
+     * Get the payment that owns the Ticket
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function payment()
     {
-        return $this->hasOne(Payment::class);
+        return $this->belongsTo(Payment::class);
     }
     
     /**

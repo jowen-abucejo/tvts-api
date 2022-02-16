@@ -26,6 +26,8 @@ class TicketController extends Controller
         $limit = ($request->limit)?? 30;
         $order = ($request->order)?? 'DESC';
         $search = ($request->search)?? '';
+        $start_date = $request->date_range? Carbon::createFromFormat('Y-m-d', $request->date_range[0]) : null;
+        $end_date = $request->date_range? Carbon::createFromFormat('Y-m-d', $request->date_range[1]) : null;
         $like = (env('DB_CONNECTION') == 'pgsql') ? 'ILIKE' : 'LIKE';
         if($search_with_violator && !empty($search)){
             $violator_ids = app('\App\Http\Controllers\ViolatorController')->index($request, true);
@@ -41,13 +43,25 @@ class TicketController extends Controller
                 )->orWhere('ticket_number', $like, '%'.$search.'%'
                 )->orderBy('datetime_of_apprehension', $order)->paginate($limit)
             );
-        } else {
+        }
+        if($start_date && $end_date){
+            return TicketResource::collection(Ticket::where(
+                function ($query) use ($like, $search) {
+                    $query->where('id', $like, '%'.$search.'%'
+                        )->orWhere('ticket_number', $like, '%'.$search.'%'
+                    );
+                }
+            )->where('datetime_of_apprehension', '>=', $start_date
+            )->where('datetime_of_apprehension', '<=', $end_date
+            )->orderBy('datetime_of_apprehension', $order
+            )->paginate($limit)
+            );
+        }
             return TicketResource::collection(Ticket::where('id', $like, '%'.$search.'%'
                 )->orWhere('ticket_number', $like, '%'.$search.'%'
                 )->orderBy('datetime_of_apprehension', $order
                 )->paginate($limit)
             );
-        }
     }
 
     /**

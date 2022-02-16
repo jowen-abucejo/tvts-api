@@ -23,11 +23,12 @@ class TicketController extends Controller
      */
     public function index(Request $request, $search_with_violator = true)
     {
+        $range = $request->date_range;
         $limit = ($request->limit)?? 30;
         $order = ($request->order)?? 'DESC';
         $search = ($request->search)?? '';
-        $start_date = $request->date_range !== null ? Carbon::createFromFormat('Y-m-d', $request->date_range[0]) : null;
-        $end_date = $request->date_range !== null ? Carbon::createFromFormat('Y-m-d', $request->date_range[1]) : null;
+        $start_date = $range != 'null' &&  $range != null ? Carbon::createFromFormat('Y-m-d', $request->date_range[0]) : null;
+        $end_date = $range != 'null' &&  $range != null ? Carbon::createFromFormat('Y-m-d', $request->date_range[1]) : null;
         $like = (env('DB_CONNECTION') == 'pgsql') ? 'ILIKE' : 'LIKE';
         if($search_with_violator && !empty($search)){
             $violator_ids = app('\App\Http\Controllers\ViolatorController')->index($request, true);

@@ -235,10 +235,10 @@ class TicketController extends Controller
         $end_date = (!$request->month || !$request->year)? now()->endOfMonth()->toDateString() : Carbon::createFromFormat('Y-m-d', $request->year.'-'.$request->month.'-01')->endOfMonth()->toDateString();
 
         $day_format_query = env('DB_CONNECTION') == 'pgsql' 
-            ? DB::raw('to_char(datetime_of_apprehension, "Mon-DD") as day')
+            ? DB::raw("to_char(datetime_of_apprehension, 'Mon-DD') as day")
             : DB::raw('date_format(datetime_of_apprehension, "%b-%d") as day');
         $day_order_query = env('DB_CONNECTION') == 'pgsql' 
-            ? DB::raw('to_char(datetime_of_apprehension, "YYYY-MM-DD") as day_order') 
+            ? DB::raw("to_char(datetime_of_apprehension, 'YYYY-MM-DD') as day_order") 
             : DB::raw('date_format(datetime_of_apprehension, "%Y-%m-%d") as day_order');
         $ticket_count_query = DB::raw('COUNT(*) as "total_tickets"');
 

@@ -209,84 +209,72 @@ class TicketController extends Controller
      */
     public function groupByDateAndCount(Request $request)
     {
-        $data = (object)["ticket_count"=>[], "date"=>(object)[], "tickets"=>(object)[], "violation_count"=>[], "violator_count"=>[]];
-        $start_date = now()->startOfMonth()->toDateString();
-        $end_date = now()->endOfMonth()->toDateString();
-        if(!$request->month || !$request->year){
-            $ticket_count  = Ticket::where(
-                'datetime_of_apprehension', '>=', $start_date
-            )->where('datetime_of_apprehension', '<=', $end_date
-            )->groupBy(['day_order', 'day'])->orderBy('day_order', 'ASC')->get(array(
-                // DB::raw('date_format(datetime_of_apprehension, "%b-%d") as day'),//for mysql
-                DB::raw("to_char(datetime_of_apprehension, 'Mon-DD') as day"),//for posgresql
-                DB::raw('COUNT(*) as "total_tickets"'),
-                //  DB::raw("date_format(datetime_of_apprehension, '%Y-%m-%d') as day_order")//for mysql
-                 DB::raw("to_char(datetime_of_apprehension, 'YYYY-MM-DD') as day_order")//for posgresql
-                )
+        $data = (object)[
+            "daily_ticket"=>[], 
+            "date"=>(object)[], 
+            "tickets"=>[], 
+            "violation_count"=>[
+                'all_violation_ticket_count'=>[], 
+                'violation_ticket_count_within_date'=>[]
+            ], 
+            "violator_count"=>[
+                'all_violator_ticket_count'=>[], 
+                'violator_ticket_count_within_date'=>[]
+            ],
+            "all_ticket_count" => 0
+        ];
+        $all_ticket_count = Ticket::count();
+
+        if (intval($all_ticket_count) < 1)
+            return response()->json([
+                "data" => $data,
+            ]);
+        $data->all_ticket_count = $all_ticket_count;
+
+        $start_date = (!$request->month || !$request->year)? now()->startOfMonth()->toDateString() : Carbon::createFromFormat('Y-m-d', $request->year.'-'.$request->month.'-01')->startOfMonth()->toDateString();
+        $end_date = (!$request->month || !$request->year)? now()->endOfMonth()->toDateString() : Carbon::createFromFormat('Y-m-d', $request->year.'-'.$request->month.'-01')->endOfMonth()->toDateString();
+
+        $day_format_query = env('DB_CONNECTION') == 'pgsql' 
+            ? 'date_format(datetime_of_apprehension, "Mon-DD") as day' 
+            : 'date_format(datetime_of_apprehension, "%b-%d") as day';
+        $day_order_query = env('DB_CONNECTION') == 'pgsql' 
+            ? 'date_format(datetime_of_apprehension, "YYYY-MM-DD") as day_order' 
+            : 'date_format(datetime_of_apprehension, "%Y-%m-%d") as day_order';
+        $ticket_count_query = 'COUNT(*) as "total_tickets"';
+
+        $daily_ticket  = Ticket::where(
+            'datetime_of_apprehension', '>=', $start_date
+        )->where('datetime_of_apprehension', '<=', $end_date
+        )->groupBy(['day_order', 'day'])->orderBy('day_order', 'ASC')->get(array(
+                DB::raw($day_format_query),
+                DB::raw($day_order_query),
+                DB::raw($ticket_count_query),
+            )
+        );
+        $data->daily_ticket = $daily_ticket;
+
+        if(count($daily_ticket) >= 5){
+            $data->date = ["month"=>now()->monthName, "year"=>now()->year];
+            $data->tickets = TicketResource::collection(Ticket::where(
+                    'datetime_of_apprehension', '>=', $start_date
+                )->where(
+                    'datetime_of_apprehension', '<=', $end_date
+                )->orderBy('datetime_of_apprehension', 'DESC')->get()
             );
-            if(count($ticket_count) >= 5){
-                $data->ticket_count = $ticket_count;
-                $data->date = ["month"=>now()->monthName, "year"=>now()->year];
-                $data->tickets = TicketResource::collection(Ticket::where(
-                        'datetime_of_apprehension', '>=', $start_date
-                    )->where(
-                        'datetime_of_apprehension', '<=', $end_date
-                    )->orderBy('datetime_of_apprehension', 'DESC')->get()
-                );
-            }             
-         } else if($request->month && $request->year) {
-            $next_month = ($request->month<12)? $request->month + 1: 1;
-            $start_date =  Carbon::createFromFormat('Y-m-d', $request->year.'-'.$request->month.'-01');
-            $end_date = Carbon::createFromFormat('Y-m-d', $request->year.'-'.$next_month.'-01');
-            $ticket_count  = Ticket::where(
-                'datetime_of_apprehension', '>=', $start_date
-            )->where(
-                'datetime_of_apprehension', '<', $end_date
-            )->groupBy(['day_order','day'])->orderBy('day_order', 'ASC')->get(
+        } else {
+            $daily_ticket = Ticket::take(30)->groupBy(['day_order', 'day'])->orderBy('day_order', 'DESC')->get(
                 array(
-                    // DB::raw('date_format(datetime_of_apprehension, "%b-%d") as day'),//for mysql
-                    DB::raw("to_char(datetime_of_apprehension, 'Mon-DD') as day"),//for posgresql
-                    DB::raw('COUNT(*) as "total_tickets"'),
-                    // DB::raw("date_format(datetime_of_apprehension, '%Y-%m-%d') as day_order")//for mysql
-                    DB::raw("to_char(datetime_of_apprehension, 'YYYY-MM-DD') as day_order")//for posgresql
-
+                    DB::raw($day_format_query),
+                    DB::raw($day_order_query),
+                    DB::raw($ticket_count_query)
                 )
-            );
-            if(count($ticket_count) >= 5){
-                $data->ticket_count = $ticket_count;
-                $data->date = ["month"=>$start_date->monthName, "year"=>$start_date->year];
-                $data->tickets = TicketResource::collection(Ticket::where(
-                        'datetime_of_apprehension', '>=', $start_date
-                    )->where(
-                        'datetime_of_apprehension', '<', $end_date
-                    )->orderBy('datetime_of_apprehension', 'DESC')->get()
-                );
-            }
-        }else{}
+            )->sortBy(['day_order', 'ASC']);
+            
+            $all_dates = $data->daily_ticket->pluck('day_order');
+            $start_date =  Carbon::createFromFormat('Y-m-d', $all_dates[0])->startOfMonth()->toDateString();
+            $end_date = Carbon::createFromFormat('Y-m-d', $all_dates[count($all_dates)-1])->endOfMonth()->toDateString();
 
-        if(count($data->ticket_count) < 5){
-            if(env('DB_CONNECTION') == 'pgsql'){
-                $data->ticket_count = Ticket::take(30)->groupBy(['day_order', 'day'])->orderBy('day_order', 'DESC')->get(
-                    array(
-                        DB::raw("to_char(datetime_of_apprehension, 'Mon-DD-YYYY') as day"),//for posgresql
-                        DB::raw('COUNT(*) as "total_tickets"'),
-                        DB::raw("to_char(datetime_of_apprehension, 'YYYY-MM-DD') as day_order")//for posgresql
-                    )
-                )->sortBy(['day_order', 'ASC']);
-            } else {
-                    $data->ticket_count = Ticket::take(30)->groupBy(['day_order', 'day'])->orderBy('day_order', 'DESC')->get(
-                        array(
-                            DB::raw('date_format(datetime_of_apprehension, "%b-%d-%Y") as day'),//for mysql
-                            DB::raw('COUNT(*) as "total_tickets"'),
-                            DB::raw("date_format(datetime_of_apprehension, '%Y-%m-%d') as day_order")//for mysql
-                        )
-                    )->sortBy(['day_order', 'ASC']);
-            }
             $data->date = ["month"=>"Latest", "year"=>''];
-
-            $all_dates= $data->ticket_count->pluck('day_order');
-            $start_date =  Carbon::createFromFormat('Y-m-d', $all_dates[0]);
-            $end_date = Carbon::createFromFormat('Y-m-d', $all_dates[count($all_dates)-1]);
             $data->tickets = TicketResource::collection(Ticket::where(
                     'datetime_of_apprehension', '>=', $start_date
                 )->where(
@@ -298,10 +286,7 @@ class TicketController extends Controller
         $request->merge(['ticket_ids'=>$data->tickets->pluck('id')]);
         $data->violation_count = app('\App\Http\Controllers\ViolationController')->groupByAndCount($request);
         $data->violator_count = app('\App\Http\Controllers\ViolatorController')->groupByAndCount($request);
-        return response()->json([
-            "data" => $data,
-            "all_ticket_count" => Ticket::count()
-        ]);
+        return response()->json(["data" => $data]);
     }
 
     public function emailQRCode(Request $request, $ticket_number)
@@ -331,7 +316,7 @@ class TicketController extends Controller
             return response()->json(["error" => "Ticket Not Found!", "message" => "Ticket $ticket_number not found."],); 
     }
     
-    public function testShowImage(Request $request, $image_path)
+    public function showImage(Request $request, $image_path)
     {
         $real_path = str_replace(' ','/', $image_path);
         if (Storage::exists($real_path)) {

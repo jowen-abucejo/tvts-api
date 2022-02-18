@@ -56,7 +56,7 @@ Route::middleware(['auth:api'])->prefix(env('API_VERSION'))->group(function () {
     
     Route::get('forms/ext/fields/{property_owner?}', [ExtraPropertyController::class, 'index']);  
 
-    Route::get('resources/image/{image_path}', [TicketController::class, 'testShowImage']);  
+    Route::get('resources/image/{image_path}', [TicketController::class, 'showImage']);  
 
 
 });

@@ -58,6 +58,7 @@ class TicketController extends Controller
                 )->paginate($limit)
             ))->additional(['meta' => [
                 'new_records' => $unpaginated_results,
+                'max_fetch_date' => $max_fetch_date
             ]]);
         }
         if($start_date && $end_date){
@@ -90,6 +91,7 @@ class TicketController extends Controller
             )->paginate($limit)
         ))->additional(['meta' => [
             'new_records' => $unpaginated_results,
+            'max_fetch_date' => $max_fetch_date
         ]]);
 
     }

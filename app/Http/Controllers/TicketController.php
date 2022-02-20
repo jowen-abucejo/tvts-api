@@ -51,7 +51,7 @@ class TicketController extends Controller
                 )->orderBy('datetime_of_apprehension', $order)
             );
 
-            $paginated_results = TicketResource::collection(Ticket::where(
+            return (TicketResource::collection(Ticket::where(
                 function ($query) use ($like, $search) {
                     $query->where('id', $like, '%'.$search.'%'
                         )->orWhere('ticket_number', $like, '%'.$search.'%'
@@ -60,15 +60,14 @@ class TicketController extends Controller
                 )->where('datetime_of_apprehension', '<=', $max_fetch_date
                 )->orderBy('datetime_of_apprehension', $order
                 )->paginate($limit)
-                )->additional(
-                    [
-                        'meta' => [
-                            'new_records' => $unpaginated_results,
-                        ]
+                )
+            )->additional(
+                [
+                    'meta' => [
+                        'new_records' => $unpaginated_results,
                     ]
-                );
-            
-            return $paginated_results;
+                ]
+            );
         }
         if($start_date && $end_date){
             return TicketResource::collection(Ticket::where(
@@ -94,7 +93,7 @@ class TicketController extends Controller
             )->orderBy('datetime_of_apprehension', $order)
         );
 
-        $paginated_results = TicketResource::collection(Ticket::where(
+        return (TicketResource::collection(Ticket::where(
             function ($query) use ($like, $search) {
                 $query->where('id', $like, '%'.$search.'%'
                     )->orWhere('ticket_number', $like, '%'.$search.'%'
@@ -103,14 +102,14 @@ class TicketController extends Controller
             )->where('datetime_of_apprehension', '<=', $max_fetch_date
             )->orderBy('datetime_of_apprehension', $order
             )->paginate($limit)
-            )->additional(
-                [
-                    'meta' => [
-                        'new_records' => $unpaginated_results,
-                    ]
+            )
+        )->additional(
+            [
+                'meta' => [
+                    'new_records' => $unpaginated_results,
                 ]
-            );
-        return $paginated_results;
+            ]
+        );
     }
 
     /**

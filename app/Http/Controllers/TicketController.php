@@ -56,7 +56,6 @@ class TicketController extends Controller
                         )->orWhere('ticket_number', $like, '%'.$search.'%'
                     );
                 }
-                )->where('datetime_of_apprehension', '<=', $start_fetch_date
                 )->union($unpaginated_results
                 )->orderBy('datetime_of_apprehension', $order
                 )->paginate($limit)
@@ -92,7 +91,6 @@ class TicketController extends Controller
                         )->orWhere('ticket_number', $like, '%'.$search.'%'
                     );
                 }
-                )->where('datetime_of_apprehension', '<=', $start_fetch_date
                 )->union($unpaginated_results
                 )->orderBy('datetime_of_apprehension', $order
                 )->paginate($limit)

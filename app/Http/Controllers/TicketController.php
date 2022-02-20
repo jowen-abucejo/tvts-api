@@ -48,7 +48,7 @@ class TicketController extends Controller
                     );
                 }
                 )->where('datetime_of_apprehension', '>', $start_fetch_date
-                )->orderBy('datetime_of_apprehension', $order);
+            );
 
             $paginated_results = TicketResource::collection(Ticket::where(
                 function ($query) use ($like, $search) {
@@ -84,7 +84,7 @@ class TicketController extends Controller
                     );
                 }
                 )->where('datetime_of_apprehension', '>', $start_fetch_date
-                )->orderBy('datetime_of_apprehension', $order);
+                );
 
             $paginated_results = TicketResource::collection(Ticket::where(
                 function ($query) use ($like, $search) {

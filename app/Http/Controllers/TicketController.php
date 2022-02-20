@@ -48,7 +48,7 @@ class TicketController extends Controller
                             )->orWhere('ticket_number', $like, '%'.$search.'%'
                         );
                     }
-                )->where('datetime_of_apprehension', '>', $max_fetch_date
+                )->where('datetime_of_apprehension', '>', $max_fetch_date->format('Y-m-d H:i:s')
                 )->orderBy('datetime_of_apprehension', 'DESC')->get()
             );
 
@@ -80,7 +80,7 @@ class TicketController extends Controller
                         )->orWhere('ticket_number', $like, '%'.$search.'%'
                     );
                 }
-            )->where('datetime_of_apprehension', '>', $max_fetch_date
+            )->where('datetime_of_apprehension', '>', $max_fetch_date->format('Y-m-d H:i:s')
             )->orderBy('datetime_of_apprehension', 'DESC')->get()
         );
 

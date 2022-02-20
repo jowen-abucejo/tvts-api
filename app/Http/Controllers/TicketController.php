@@ -49,7 +49,7 @@ class TicketController extends Controller
                         );
                     }
                 )->where('datetime_of_apprehension', '>', $max_fetch_date
-                )->orderBy('datetime_of_apprehension', 'DESC')
+                )->orderBy('datetime_of_apprehension', 'DESC')->get()
             );
 
             return (new TicketCollection(Ticket::where('id', $like, '%'.$search.'%'
@@ -81,7 +81,7 @@ class TicketController extends Controller
                     );
                 }
             )->where('datetime_of_apprehension', '>', $max_fetch_date
-            )->orderBy('datetime_of_apprehension', 'DESC')
+            )->orderBy('datetime_of_apprehension', 'DESC')->get()
         );
 
         return (new TicketCollection(Ticket::where('id', $like, '%'.$search.'%'

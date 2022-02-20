@@ -42,7 +42,7 @@ class TicketController extends Controller
                 
             }
 
-            $unpaginated_results = new TicketCollection(Ticket::where(
+            $unpaginated_results = TicketResource::collection(Ticket::where(
                         function ($query) use ($like, $search) {
                             $query->where('id', $like, '%'.$search.'%'
                                 )->orWhere('ticket_number', $like, '%'.$search.'%'
@@ -52,16 +52,12 @@ class TicketController extends Controller
                 )
             );
 
-            $paginated_results = new TicketCollection(Ticket::where(
-                    function ($query) use ($like, $search) {
-                        $query->where('id', $like, '%'.$search.'%'
-                            )->orWhere('ticket_number', $like, '%'.$search.'%'
-                        );
-                    }
+            $paginated_results = new TicketCollection(Ticket::where('id', $like, '%'.$search.'%'
+                )->orWhere('ticket_number', $like, '%'.$search.'%'
                 )->orderBy('datetime_of_apprehension', $order
                 )->paginate($limit)
             );
-            
+
             return $paginated_results->additional(['meta' => [
                 'new_records' => $unpaginated_results,
             ]]);
@@ -79,7 +75,8 @@ class TicketController extends Controller
                 )->paginate($limit)
             );
         }
-        $unpaginated_results = new TicketCollection(Ticket::where(
+        
+        $unpaginated_results = TicketResource::collection(Ticket::where(
                     function ($query) use ($like, $search) {
                         $query->where('id', $like, '%'.$search.'%'
                             )->orWhere('ticket_number', $like, '%'.$search.'%'
@@ -89,12 +86,8 @@ class TicketController extends Controller
             )
         );
 
-        $paginated_results = new TicketCollection(Ticket::where(
-                function ($query) use ($like, $search) {
-                    $query->where('id', $like, '%'.$search.'%'
-                        )->orWhere('ticket_number', $like, '%'.$search.'%'
-                    );
-                }
+        $paginated_results = new TicketCollection(Ticket::where('id', $like, '%'.$search.'%'
+            )->orWhere('ticket_number', $like, '%'.$search.'%'
             )->orderBy('datetime_of_apprehension', $order
             )->paginate($limit)
         );

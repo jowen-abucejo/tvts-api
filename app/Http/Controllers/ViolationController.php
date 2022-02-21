@@ -19,11 +19,17 @@ class ViolationController extends Controller
      */
     public function index(Request $request)
     {
+        $limit = ($request->limit)?? 30;
+        $order = ($request->order)?? 'ASC';
+        $search = ($request->search)?? '';
+
+        $like = (env('DB_CONNECTION') == 'pgsql') ? 'ILIKE' : 'LIKE';
+
         if($request->ticket_ids){
             return ViolationResource::collection(Violation::whereIn('id', $request->ticket_ids)->withTrashed()->get());
         }
         if($request->user && $request->user()->isAdmin()){
-            return ViolationResource::collection(Violation::withTrashed()->orderBy('violation')->get());
+            return ViolationResource::collection(Violation::withTrashed()->where('violation_code', $like, $search)->orWhere('violation', $like, $search)->orderBy('violation', 'violation_code')->paginate($limit));
         }
         return ViolationResource::collection(Violation::all());
     }

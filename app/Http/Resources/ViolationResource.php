@@ -20,7 +20,6 @@ class ViolationResource extends JsonResource
             "violation" => $this->violation,
             "violation_code" => $this->violation_code,
             "violation_types" => ViolationTypeResource::collection($this->violation_types),
-            "ticket_count" => $this->tickets_count,
             "deleted_at" => $this->deleted_at
         ];
     }

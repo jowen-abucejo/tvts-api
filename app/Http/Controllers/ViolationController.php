@@ -32,9 +32,9 @@ class ViolationController extends Controller
         if(Auth::user()->isAdmin()){
             return ViolationResource::collection(Violation::where('violation_code', $like, $search
                 )->orWhere('violation', $like, $search
-                )->orderBy('violation', $order
+                )->withTrashed()->orderBy('violation', $order
                 )->orderBy('violation_code', $order
-                )->withTrashed()->paginate($limit)
+                )->paginate($limit)
             );
         }
         return ViolationResource::collection(Violation::all());

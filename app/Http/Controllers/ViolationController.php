@@ -28,8 +28,8 @@ class ViolationController extends Controller
         if($request->ticket_ids){
             return ViolationResource::collection(Violation::whereIn('id', $request->ticket_ids)->withTrashed()->get());
         }
-        if($request->user && $request->user()->isAdmin()){
-            return ViolationResource::collection(Violation::withTrashed()->where('violation_code', $like, $search)->orWhere('violation', $like, $search)->orderBy('violation', 'violation_code')->paginate($limit));
+        if($request->user && $request->user->isAdmin()){
+            return ViolationResource::collection(Violation::where('violation_code', $like, $search)->orWhere('violation', $like, $search)->orderBy('violation', $order)->orderBy('violation_code', $order)->withTrashed()->paginate($limit));
         }
         return ViolationResource::collection(Violation::all());
     }

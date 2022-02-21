@@ -30,7 +30,11 @@ class ViolationController extends Controller
             return ViolationResource::collection(Violation::whereIn('id', $request->ticket_ids)->withTrashed()->get());
         }
         if(Auth::user()->isAdmin()){
-            return ViolationResource::collection(Violation::withTrashed()->where('violation_code', $like, $search
+            return ViolationResource::collection(Violation::where(function($query) use($like, $search){
+                $query->onlyTrashed(
+                )->where('violation_code', $like, $search
+                )->orWhere('violation', $like, $search);
+            })->orWhere('violation_code', $like, $search
                 )->orWhere('violation', $like, $search
                 )->orderBy('violation', $order
                 )->orderBy('violation_code', $order

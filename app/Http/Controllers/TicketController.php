@@ -24,14 +24,14 @@ class TicketController extends Controller
      */
     public function index(Request $request, $search_with_violator = true)
     {
+        $start_date = $request->start_date? Carbon::createFromFormat('Y-m-d', $request->start_date)->startOfDay() :  null;
+        $end_date = $request->end_date? Carbon::createFromFormat('Y-m-d', $request->end_date)->endOfDay() :  null;
+
         $limit = ($request->limit)?? 30;
         $order = ($request->order)?? 'DESC';
         $search = ($request->search)?? '';
-        $start_date = $request->start_date? Carbon::createFromFormat('Y-m-d', $request->start_date)->startOfDay() :  null;
-        $end_date = $request->end_date? Carbon::createFromFormat('Y-m-d', $request->end_date)->endOfDay() :  null;
-        $max_fetch_date = $request->max_fetch_date?  new DateTime($request->max_fetch_date) : Carbon::now();
         $like = (env('DB_CONNECTION') == 'pgsql') ? 'ILIKE' : 'LIKE';
-        if($search_with_violator && !empty($search)){
+        if($search_with_violator && !empty($search)){//if tickets can be search with violator details
             $violator_ids = app('\App\Http\Controllers\ViolatorController')->index($request, true);
             if(!empty($violator_ids)){
                 return TicketResource::collection(Ticket::where('id', $like, '%'.$search.'%'
@@ -42,26 +42,13 @@ class TicketController extends Controller
                 
             }
 
-            $unpaginated_results = TicketResource::collection(Ticket::where(
-                    function ($query) use ($like, $search) {
-                        $query->where('id', $like, '%'.$search.'%'
-                            )->orWhere('ticket_number', $like, '%'.$search.'%'
-                        );
-                    }
-                )->where('datetime_of_apprehension', '>', $max_fetch_date->format('Y-m-d H:i:s')
-                )->orderBy('datetime_of_apprehension', 'DESC')->get()
-            );
+            //get with new records untracked by paginated results
+            return $this->indexWithUnpaginatedRecords($request);
 
-            return (new TicketCollection(Ticket::where('id', $like, '%'.$search.'%'
-                )->orWhere('ticket_number', $like, '%'.$search.'%'
-                )->orderBy('datetime_of_apprehension', $order
-                )->paginate($limit)
-            ))->additional(['meta' => [
-                'new_records' => $unpaginated_results,
-                'max_fetch_date' => $max_fetch_date->format('Y-m-d H:i:s')
-            ]]);
+
+            
         }
-        if($start_date && $end_date){
+        if($start_date && $end_date){//if tickets are filtered by date
             return TicketResource::collection(Ticket::where(
                 function ($query) use ($like, $search) {
                     $query->where('id', $like, '%'.$search.'%'
@@ -75,24 +62,8 @@ class TicketController extends Controller
             );
         }
 
-        $unpaginated_results = TicketResource::collection(Ticket::where(
-                function ($query) use ($like, $search) {
-                    $query->where('id', $like, '%'.$search.'%'
-                        )->orWhere('ticket_number', $like, '%'.$search.'%'
-                    );
-                }
-            )->where('datetime_of_apprehension', '>', $max_fetch_date->format('Y-m-d H:i:s')
-            )->orderBy('datetime_of_apprehension', 'DESC')->get()
-        );
-
-        return (new TicketCollection(Ticket::where('id', $like, '%'.$search.'%'
-            )->orWhere('ticket_number', $like, '%'.$search.'%'
-            )->orderBy('datetime_of_apprehension', $order
-            )->paginate($limit)
-        ))->additional(['meta' => [
-            'new_records' => $unpaginated_results,
-            'max_fetch_date' => $max_fetch_date->format('Y-m-d H:i:s')
-        ]]);
+        //get with new records untracked by paginated results
+        return $this->indexWithUnpaginatedRecords($request);
 
     }
 
@@ -360,6 +331,39 @@ class TicketController extends Controller
         }
         return response()->json(["error" => "File Not Found!"], 404);
 
+    }
+
+    function indexWithUnpaginatedRecords(Request $request)
+    {
+        $limit = ($request->limit)?? 30;
+        $order = ($request->order)?? 'DESC';
+        $search = ($request->search)?? '';
+        $like = (env('DB_CONNECTION') == 'pgsql') ? 'ILIKE' : 'LIKE';
+        $max_fetch_date = $request->max_fetch_date?  new DateTime($request->max_fetch_date) : Carbon::now();
+        $max_date_paginated = $request->max_date_paginated?  new DateTime($request->max_date_paginated) : Carbon::now();
+
+        $unpaginated_results = TicketResource::collection(Ticket::where(
+                function ($query) use ($like, $search) {
+                    $query->where('id', $like, '%'.$search.'%'
+                        )->orWhere('ticket_number', $like, '%'.$search.'%'
+                    );
+                }
+            )->where('datetime_of_apprehension', '>', $max_fetch_date->format('Y-m-d H:i:s')
+            )->orderBy('datetime_of_apprehension', 'DESC')->get()
+        );
+
+        return (new TicketCollection(Ticket::where(
+            function($query) use($like, $search, $order) {
+                $query->where('id', $like, '%'.$search.'%'
+                )->orWhere('ticket_number', $like, '%'.$search.'%');
+            }
+        )->where('datetime_of_apprehension', '<=', $max_date_paginated->format('Y-m-d H:i:s')
+        )->orderBy('datetime_of_apprehension', $order
+        )->paginate($limit)
+        ))->additional(['meta' => [
+            'new_records' => $unpaginated_results,
+            'max_date_paginated' => $max_date_paginated->format('Y-m-d H:i:s')
+        ]]);
     }
 
 }

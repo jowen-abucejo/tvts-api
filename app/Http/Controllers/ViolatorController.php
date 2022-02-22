@@ -23,14 +23,14 @@ class ViolatorController extends Controller
         $order = ($request->order)?? 'ASC';
         $search = ($request->search)?? '';
         $like = (env('DB_CONNECTION') == 'pgsql') ? 'ILIKE' : 'LIKE';
-        $full_name_query = DB::raw("concat_ws(' ', last_name, first_name, middle_name) as name");
+        $full_name_query = DB::raw("concat_ws('', last_name, first_name, middle_name)");
         if($pluck_id){
-           return Violator::select('id', $full_name_query)->where('name', $like, '%'.$search.'%'
+           return Violator::where($full_name_query, $like, '%'.$search.'%'
                 )->orWhere('license_number', $like, '%'.$search.'%'
                 )->pluck('id')->toArray();
         }
         return ViolatorResource::collection(
-            Violator::select('*', $full_name_query)->withCount('tickets')->where('name', $like, '%'.$search.'%'
+            Violator::withCount('tickets')->where($full_name_query, $like, '%'.$search.'%'
                 )->orWhere('license_number', $like, '%'.$search.'%'
                 )->orderBy('last_name', $order
                 )->orderBy('first_name', $order

@@ -286,7 +286,7 @@ class TicketController extends Controller
         $data->violator_count = Ticket::where('datetime_of_apprehension', '>=', $start_date
             )->where('datetime_of_apprehension', '<=', $end_date
             )->groupBy('offense_number'
-            )->orderBy('total_violator', 'DESC'
+            )->orderBy('offense_number', 'DESC'
             )->get(
                 array(
                     DB::raw('offense_number'), 

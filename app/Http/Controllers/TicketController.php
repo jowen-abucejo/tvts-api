@@ -281,7 +281,8 @@ class TicketController extends Controller
     
         $request->merge(['ticket_ids'=>$data->tickets->pluck('id')]);
         $data->violation_count = app('\App\Http\Controllers\ViolationController')->countEachTickets($request);
-        $data->violator_count = app('\App\Http\Controllers\ViolatorController')->countEachTickets($request);
+        // $data->violator_count = app('\App\Http\Controllers\ViolatorController')->countEachTickets($request);
+        $data->violator_count = $data->tickets->toQuery()->select('offense_number', DB::raw('count(*) as total_violator'))->groupBy('offense_number')->get();
         return response()->json(["data" => $data]);
     }
 

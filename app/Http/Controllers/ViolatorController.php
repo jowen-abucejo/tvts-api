@@ -7,6 +7,7 @@ use App\Models\Ticket;
 use App\Models\Violator;
 use DateTime;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class ViolatorController extends Controller
@@ -22,17 +23,15 @@ class ViolatorController extends Controller
         $order = ($request->order)?? 'ASC';
         $search = ($request->search)?? '';
         $like = (env('DB_CONNECTION') == 'pgsql') ? 'ILIKE' : 'LIKE';
-
+        $full_name_query = DB::raw('CONCAT_WS(", ", last_name, first_name, middle_name) AS full_name');
         if($pluck_id){
-           return Violator::where('last_name', $like, '%'.$search.'%'
-                )->orWhere('first_name', $like, '%'.$search.'%'
-                )->orWhere('middle_name', $like, '%'.$search.'%'
+           return Violator::where($full_name_query, $like, '%'.$search.'%'
+                )->orWhere('license_number', $like, '%'.$search.'%'
                 )->pluck('id')->toArray();
         }
         return ViolatorResource::collection(
-            Violator::withCount('tickets')->where('last_name', $like, '%'.$search.'%'
-                )->orWhere('first_name', $like, '%'.$search.'%'
-                )->orWhere('middle_name', $like, '%'.$search.'%'
+            Violator::withCount('tickets')->where($full_name_query, $like, '%'.$search.'%'
+                )->orWhere('license_number', $like, '%'.$search.'%'
                 )->orderBy('last_name', $order
                 )->orderBy('first_name', $order
                 )->orderBy('middle_name', $order

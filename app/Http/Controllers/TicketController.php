@@ -280,8 +280,8 @@ class TicketController extends Controller
         }
     
         $request->merge(['ticket_ids'=>$data->tickets->pluck('id')]);
-        $data->violation_count = app('\App\Http\Controllers\ViolationController')->groupByAndCount($request);
-        $data->violator_count = app('\App\Http\Controllers\ViolatorController')->groupByAndCount($request);
+        $data->violation_count = app('\App\Http\Controllers\ViolationController')->countEachTickets($request);
+        $data->violator_count = app('\App\Http\Controllers\ViolatorController')->countEachTickets($request);
         return response()->json(["data" => $data]);
     }
 

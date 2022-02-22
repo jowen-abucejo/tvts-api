@@ -23,7 +23,7 @@ class ViolatorController extends Controller
         $order = ($request->order)?? 'ASC';
         $search = ($request->search)?? '';
         $like = (env('DB_CONNECTION') == 'pgsql') ? 'ILIKE' : 'LIKE';
-        $full_name_query = DB::raw('CONCAT_WS(", ", last_name, first_name, middle_name) AS full_name');
+        $full_name_query = DB::raw('CONCAT_WS(", ", last_name, first_name, middle_name) AS name');
         if($pluck_id){
            return Violator::where($full_name_query, $like, '%'.$search.'%'
                 )->orWhere('license_number', $like, '%'.$search.'%'

@@ -147,13 +147,11 @@ class ViolationController extends Controller
         );
     }
 
-    public function groupByAndCount(Request $request)
+    public function countEachTickets(Request $request)
     {
-        $data = (object)['all_violation_ticket_count'=>[], 'violation_ticket_count_within_date'=>[]];
-        $all_ids = Ticket::select('id')->get();
+        $data = [];
         $within_date_ids = $request->ticket_ids?? [0,];
-
-        $data->violation_ticket_count_within_date = Violation::join('ticket_violation', 'violations.id', '=', 'ticket_violation.violation_id'
+        $data = Violation::join('ticket_violation', 'violations.id', '=', 'ticket_violation.violation_id'
             )->whereIn('ticket_id', $within_date_ids)->groupBy(['violation',])->orderBy('total_tickets', 'DESC'
             )->get( 
                 array(
@@ -161,14 +159,6 @@ class ViolationController extends Controller
                     DB::raw('COUNT(*) as "total_tickets"')
                 )
             );
-        $data->all_violation_ticket_count = Violation::join('ticket_violation', 'violations.id', '=', 'ticket_violation.violation_id'
-        )->whereIn('ticket_id', $all_ids)->groupBy(['violation',])->orderBy('total_tickets', 'DESC'
-        )->get( 
-            array(
-                DB::raw('violation'),
-                DB::raw('COUNT(*) as "total_tickets"')
-            )
-        );
         return $data;
     }
 }

@@ -190,25 +190,16 @@ class ViolatorController extends Controller
         //
     }
 
-    public function groupByAndCount(Request $request)
+    public function countEachTickets(Request $request)
     {
-        $data = (object)['all_violator_ticket_count'=>[], 'violator_ticket_count_within_date'=>[]];
-        $all_ids = Ticket::select('id')->get();
-        $within_date_ids = $request->ticket_ids?? [1];
+        $data = [];
+        $within_date_ids = $request->ticket_ids?? [0, ];
 
         $grouped = Violator::select('id' )->withCount('tickets')->whereHas('tickets', function($query) use($within_date_ids) {
             return $query->whereIn('id', $within_date_ids);
         })->orderBy('tickets_count', 'ASC')->get();
 
-        $data->violator_ticket_count_within_date = $grouped->mapToGroups(function ($item, $key) {
-            return ["offense_".$item['tickets_count'] => $item['id']];
-        });
-
-        $grouped = Violator::select('id' )->withCount('tickets')->whereHas('tickets', function($query) use($all_ids) {
-            return $query->whereIn('id', $all_ids);
-        })->orderBy('tickets_count', 'ASC')->get();
-
-        $data->all_violator_ticket_count = $grouped->mapToGroups(function ($item, $key) {
+        $data = $grouped->mapToGroups(function ($item, $key) {
             return ["offense_".$item['tickets_count'] => $item['id']];
         });
         return $data;

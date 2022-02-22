@@ -209,21 +209,15 @@ class TicketController extends Controller
     /**
      * Get ticket count for each day within the given period of time
      */
-    public function groupByDateAndCount(Request $request)
+    public function dailyCount(Request $request)
     {
         $data = (object)[
-            "daily_ticket"=>[], 
+            "daily_ticket"=>[],
+            "date_range"=>[],
             "date"=>(object)[], 
             "tickets"=>[], 
-            "violation_count"=>[
-                'all_violation_ticket_count'=>[], 
-                'violation_ticket_count_within_date'=>[]
-            ], 
-            "violator_count"=>[
-                'all_violator_ticket_count'=>[], 
-                'violator_ticket_count_within_date'=>[]
-            ],
-            "all_ticket_count" => 0
+            "violation_count"=>[], 
+            "violator_count"=>[],
         ];
         $all_ticket_count = Ticket::count();
 

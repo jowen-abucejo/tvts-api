@@ -220,6 +220,7 @@ class TicketController extends Controller
             "violator_count"=>[],
         ];
         $all_ticket_count = Ticket::count();
+        $offense_violator = [];
 
         if (intval($all_ticket_count) < 1)
             return response()->json([
@@ -282,7 +283,15 @@ class TicketController extends Controller
         $request->merge(['ticket_ids'=>$data->tickets->pluck('id')]);
         $data->violation_count = app('\App\Http\Controllers\ViolationController')->countEachTickets($request);
         // $data->violator_count = app('\App\Http\Controllers\ViolatorController')->countEachTickets($request);
-        $data->violator_count = $data->tickets->toQuery()->select('offense_number', DB::raw('count(*) as total_violator'))->groupBy('offense_number')->get();
+        $data->violator_count = Ticket::where('datetime_of_apprehension', '>=', $start_date
+            )->where('datetime_of_apprehension', '<=', $end_date
+            )->groupBy('offense_number'
+            )->get(
+                array(
+                    DB::raw('offense_number'), 
+                    DB::raw('count(*) as total_violator')
+                )
+            );
         return response()->json(["data" => $data]);
     }
 

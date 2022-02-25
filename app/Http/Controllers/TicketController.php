@@ -169,7 +169,9 @@ class TicketController extends Controller
         $ticket = ($ticket_number)? Ticket::where('ticket_number', "$ticket_number")->first() : null;
         if($ticket)
             return new TicketResource($ticket);
-
+        if($request->ticket_id) {
+            return new TicketResource(Ticket::find($request->ticket_id));
+        }
         return response(null);
     }
 

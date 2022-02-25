@@ -8,6 +8,7 @@ use App\Mail\TicketIssued;
 use App\Models\Ticket;
 use Carbon\Carbon;
 use DateTime;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
@@ -86,7 +87,6 @@ class TicketController extends Controller
     {
         $violator_id = $request->violator_id ?? null;
         $violator = app('\App\Http\Controllers\ViolatorController')->store($request, $violator_id);
-        // $filepath = ($request->hasFile('drivers_id'))?$request->file('drivers_id')->store('ids'):'';
         $ticket_extra_properties = app('\App\Http\Controllers\ExtraPropertyController')->index($request, 'ticket');
         $date = $request->apprehension_datetime? new DateTime($request->apprehension_datetime): now();
         if(!$violator) return response('Violator is Null');
@@ -190,12 +190,55 @@ class TicketController extends Controller
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Ticket  $ticket
+     * @param  number $ticket_id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Ticket $ticket)
+    public function update(Request $request, $ticket_id)
     {
-        //
+        $status = false;
+
+        if(!$ticket_id) return response(null);
+        try{
+            $ticket = Ticket::find($ticket_id);
+            $date = $request->apprehension_datetime? new DateTime($request->apprehension_datetime): now();
+            $ticket->update([
+                'ticket_number' => $request->ticket_number,
+                'offense_number' => $request->offense_number,
+                'vehicle_type' => $request->vehicle_type,
+                'datetime_of_apprehension' => $date->format('Y-m-d H:i:s'),
+            ]);
+
+            app('\App\Http\Controllers\ViolatorController')->store($request, $ticket->violator()->id);
+
+            $status = true;
+
+            $violation_ids = explode(',',$request->committed_violations);
+            $ticket->violations()->attach($violation_ids);
+
+            foreach ($ticket->extraProperties() as $ext) {
+                $key = $ext->PropertyDescription()->property;
+                if($ext->PropertyDescription()->data_type == 'image'){
+                    $file = ($request->hasFile($key))? $request->file($key) : null;
+                    $filepath = ($file)? $file->store($key.'_'.$ext->id) : null;
+                    if($file &&  $filepath){
+                        Storage::delete($ext->property_value);
+                        $ext->property_value = $filepath;
+                        $ext->save();
+                    }
+                } else {
+                    $ext->property_value = $request->input($key);
+                    $ext->save(); ;
+                }
+            }
+            return response()->json([
+                $status
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                $status
+            ]);
+        }
+
     }
 
     /**

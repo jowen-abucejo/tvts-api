@@ -8,6 +8,7 @@ use App\Models\Violator;
 use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class ViolatorController extends Controller
@@ -170,12 +171,49 @@ class ViolatorController extends Controller
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Violator  $violator
+     * @param   number $violator_id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Violator $violator)
+    public function update(Request $request, $violator_id)
     {
-        //
+        $status = false;
+        
+        if(!$violator_id) return response(null);
+        try {
+            $violator = Violator::find($violator_id);
+            $violator->update([
+                'last_name' => $request->last_name,
+                'first_name' => $request->first_name,
+                'middle_name' => $request->middle_name,
+                'birth_date' => $request->birth_date,
+                'license_number' => $request->license_number,
+            ]);
+
+            $status = true;
+
+            foreach ($violator->extraProperties() as $ext) {
+                $key = $ext->PropertyDescription()->property;
+                if($ext->PropertyDescription()->data_type == 'image'){
+                    $file = ($request->hasFile($key))? $request->file($key) : null;
+                    $filepath = ($file)? $file->store($key.'_'.$ext->id) : null;
+                    if($file &&  $filepath){
+                        Storage::delete($ext->property_value);
+                        $ext->property_value = $filepath;
+                        $ext->save();
+                    }
+                } else {
+                    $ext->property_value = $request->input($key);
+                    $ext->save(); ;
+                }
+            }
+            return response()->json([
+                $status
+            ]);
+        } catch (\Exception $err) {
+            return response()->json([
+                $status
+            ]);
+        }
     }
 
     /**

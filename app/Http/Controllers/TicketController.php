@@ -102,8 +102,8 @@ class TicketController extends Controller
             ) 
             : null;
         if($ticket){
-            $tn = $request->ticket_number?? false;
-            $ticket->ticket_number = $tn? str_replace(' ', '', $request->ticket_number.'') : "TN$ticket->id";
+            $tn = $request->ticket_number? str_replace(' ', '', $request->ticket_number.'') : "TN$ticket->id";
+            $ticket->ticket_number = $tn;
             $ticket->save();
 
             $violation_ids = explode(',',$request->committed_violations);

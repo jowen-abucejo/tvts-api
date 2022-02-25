@@ -102,7 +102,7 @@ class TicketController extends Controller
             ) 
             : null;
         if($ticket){
-            $ticket->ticket_number = "TN$ticket->id";
+            $ticket->ticket_number = $request->ticket_number+''?? "TN$ticket->id";
             $ticket->save();
 
             $violation_ids = explode(',',$request->committed_violations);

@@ -231,12 +231,7 @@ class TicketController extends Controller
                     $ext->save();
                 }
             }
-            $ticketR = new TicketResource(Ticket::find($ticket_id));
-            return response()->json([
-                $ticketR,
-                $violator,
-                't_ext' => $ticket->extraProperties()
-            ]);
+            return new TicketResource(Ticket::find($ticket_id));
         } catch (\Exception $e) {
             return response($e);
             return response()->json([

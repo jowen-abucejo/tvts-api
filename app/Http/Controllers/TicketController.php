@@ -216,9 +216,9 @@ class TicketController extends Controller
             $violation_ids = explode(',',$request->committed_violations);
             $ticket->violations()->sync($violation_ids);
 
-            foreach ($ticket->extraProperties() as $ext) {
-                $key = $ext->PropertyDescription()->property;
-                if($ext->PropertyDescription()->data_type == 'image'){
+            foreach ($ticket->extraProperties as $ext) {
+                $key = $ext->PropertyDescription->property;
+                if($ext->PropertyDescription->data_type == 'image'){
                     $file = ($request->hasFile($key))? $request->file($key) : null;
                     $filepath = ($file)? $file->store($key.'_'.$ext->id) : null;
                     if($file &&  $filepath){

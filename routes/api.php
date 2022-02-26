@@ -44,7 +44,7 @@ Route::middleware(['auth:api'])->prefix(env('API_VERSION'))->group(function () {
     Route::get('violators/', [ViolatorController::class, 'index']);
     Route::post('violators/violator/', [ViolatorController::class, 'show']);
     Route::get('violators/violator/{id}', [ViolatorController::class, 'show']);
-    Route::put('violators/violator/{id}', [ViolatorController::class, 'update']);
+    Route::put('violators/violator/{violator_id}', [ViolatorController::class, 'update']);
     Route::get('violators/count/by-ticket', [ViolatorController::class, 'countEachTickets']);
 
     Route::get('tickets/', [TicketController::class, 'index']);  

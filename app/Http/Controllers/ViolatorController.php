@@ -217,6 +217,7 @@ class ViolatorController extends Controller
                 "update_status" => $status
             ]);
         } catch (\Exception $err) {
+            return $err;
             return response()->json([
                 "update_status" => $status
             ]);

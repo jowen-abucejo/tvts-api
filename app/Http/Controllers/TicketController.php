@@ -206,7 +206,6 @@ class TicketController extends Controller
             $date = $request->apprehension_datetime? new DateTime($request->apprehension_datetime): now();
             $ticket->update([
                 'ticket_number' => $request->ticket_number,
-                'offense_number' => $request->offense_number,
                 'vehicle_type' => $request->vehicle_type,
                 'datetime_of_apprehension' => $date->format('Y-m-d H:i:s'),
             ]);
@@ -235,13 +234,13 @@ class TicketController extends Controller
                 }
             }
             $status = "Complete";
-            
+
             return response()->json([
                 $status
             ]);
         } catch (\Exception $e) {
             return response()->json([
-                $status
+                $e
             ]);
         }
 

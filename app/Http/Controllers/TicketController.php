@@ -208,7 +208,7 @@ class TicketController extends Controller
                 'datetime_of_apprehension' => $date->format('Y-m-d H:i:s'),
             ]);
 
-            app('\App\Http\Controllers\ViolatorController')->store($request, $ticket->violator()->id);
+            app('\App\Http\Controllers\ViolatorController')->update($request, $ticket->violator()->id);
 
             $status = true;
 

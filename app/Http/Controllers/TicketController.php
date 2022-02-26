@@ -238,7 +238,7 @@ class TicketController extends Controller
             ]);
         } catch (\Exception $e) {
             return response()->json([
-                $e
+                $e->getMessage()
             ]);
         }
 

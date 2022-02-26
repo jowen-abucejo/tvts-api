@@ -196,7 +196,7 @@ class TicketController extends Controller
     public function update(Request $request, $ticket_id)
     {
         $status = "Failed";
-
+        return $request->all();
         if(!$ticket_id)  return response()->json([
             "update_status" => $status
         ]);

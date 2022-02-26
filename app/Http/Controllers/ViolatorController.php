@@ -176,21 +176,29 @@ class ViolatorController extends Controller
      */
     public function update(Request $request, $violator_id)
     {
-        $status = false;
+        $status = "Failed";
         
-        if(!$violator_id) return response(null);
+        if(!$violator_id)  return response()->json([
+            "update_status" => $status
+        ]);
+        
         try {
-            $violator = Violator::find($violator_id);
-            $violator->update([
-                'last_name' => $request->last_name,
-                'first_name' => $request->first_name,
-                'middle_name' => $request->middle_name,
-                'birth_date' => $request->birth_date,
-                'license_number' => $request->license_number,
-            ]);
-
-            $status = true;
-
+            $l = Str::title(preg_replace('!\s+!',' ', $request->last_name));
+            $f = Str::title(preg_replace('!\s+!',' ', $request->first_name));
+            $m = ($request->middle_name)? Str::title(preg_replace('!\s+!',' ', $request->middle_name)) : '';
+            $birth_date = new DateTime($request->birth_date);
+            if($violator_id && intval($violator_id)){
+                $violator = Violator::withCount('tickets')->find($violator_id);
+                $violator->update([
+                    'license_number' => $request->license_number,
+                    'last_name' => $l,
+                    'first_name' => $f,
+                    'middle_name' => $m,
+                    'birth_date' => $birth_date->format('Y-m-d')
+                ]);
+                $violator->save();
+            }
+            $status = "Incomplete";
             foreach ($violator->extraProperties() as $ext) {
                 $key = $ext->PropertyDescription()->property;
                 if($ext->PropertyDescription()->data_type == 'image'){
@@ -206,12 +214,13 @@ class ViolatorController extends Controller
                     $ext->save(); ;
                 }
             }
+            $status = "Complete";
             return response()->json([
-                $status
+                "update_status" => $status
             ]);
         } catch (\Exception $err) {
             return response()->json([
-                $status
+                "update_status" => $status
             ]);
         }
     }

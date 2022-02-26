@@ -195,9 +195,12 @@ class TicketController extends Controller
      */
     public function update(Request $request, $ticket_id)
     {
-        $status = false;
+        $status = "Failed";
 
-        if(!$ticket_id) return response(null);
+        if(!$ticket_id)  return response()->json([
+            "update_status" => $status
+        ]);
+
         try{
             $ticket = Ticket::find($ticket_id);
             $date = $request->apprehension_datetime? new DateTime($request->apprehension_datetime): now();
@@ -207,10 +210,11 @@ class TicketController extends Controller
                 'vehicle_type' => $request->vehicle_type,
                 'datetime_of_apprehension' => $date->format('Y-m-d H:i:s'),
             ]);
+            $ticket->save();
 
             app('\App\Http\Controllers\ViolatorController')->update($request, $ticket->violator()->id);
 
-            $status = true;
+            $status = "Partial";
 
             $violation_ids = explode(',',$request->committed_violations);
             $ticket->violations()->attach($violation_ids);
@@ -230,6 +234,8 @@ class TicketController extends Controller
                     $ext->save(); ;
                 }
             }
+            $status = "Complete";
+            
             return response()->json([
                 $status
             ]);

@@ -52,6 +52,7 @@ Route::middleware(['auth:api'])->prefix(env('API_VERSION'))->group(function () {
     
     Route::get('tickets/ticket/{ticket_number?}', [TicketController::class, 'show']);
     Route::put('tickets/ticket/{ticket_id}', [TicketController::class, 'update']);
+    Route::delete('tickets/ticket/delete/{ticket_id}', [TicketController::class, 'destroy']);
     Route::get('tickets/count/by-date', [TicketController::class, 'dailyCount']); 
 
     Route::post('tickets/email-qr/{ticket_number}', [TicketController::class, 'emailQRCode']);

@@ -246,12 +246,13 @@ class TicketController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Models\Ticket  $ticket
+     * @param  number $ticket_id
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Ticket $ticket)
+    public function destroy($ticket_id)
     {
-
+        $deleted = Ticket::find($ticket_id)->delete();
+        return response()->json(['deleted' => $deleted->trashed()]);
     }
 
     /**

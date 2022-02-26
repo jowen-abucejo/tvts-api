@@ -197,9 +197,9 @@ class ViolatorController extends Controller
             $violator->save();
 
             $status = "Incomplete";
-            foreach ($violator->extraProperties() as $ext) {
-                $key = $ext->PropertyDescription()->property;
-                if($ext->PropertyDescription()->data_type == 'image'){
+            foreach ($violator->extraProperties as $ext) {
+                $key = $ext->PropertyDescription->property;
+                if($ext->PropertyDescription->data_type == 'image'){
                     $file = ($request->hasFile($key))? $request->file($key) : null;
                     $filepath = ($file)? $file->store($key.'_'.$ext->id) : null;
                     if($file &&  $filepath){

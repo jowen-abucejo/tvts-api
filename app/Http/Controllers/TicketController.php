@@ -209,8 +209,8 @@ class TicketController extends Controller
             $ticket->datetime_of_apprehension = $date->format('Y-m-d H:i:s');
             $ticket->save();
             
-            $status = "Partial";
-            if(!app('\App\Http\Controllers\ViolatorController')->update($request, $ticket->violator()->id)) return response()->json([
+            $status = "Incomplete";
+            if(!app('\App\Http\Controllers\ViolatorController')->update($request, $ticket->violator->id)) return response()->json([
                 "update_status" => $status
             ]);
 

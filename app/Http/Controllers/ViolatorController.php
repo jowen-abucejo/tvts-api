@@ -181,7 +181,7 @@ class ViolatorController extends Controller
         if(!$violator_id)  return response()->json([
             "update_status" => $status
         ]);
-        
+
         try {
             $l = Str::title(preg_replace('!\s+!',' ', $request->last_name));
             $f = Str::title(preg_replace('!\s+!',' ', $request->first_name));
@@ -189,13 +189,11 @@ class ViolatorController extends Controller
             $birth_date = new DateTime($request->birth_date);
             if($violator_id && intval($violator_id)){
                 $violator = Violator::withCount('tickets')->find($violator_id);
-                $violator->update([
-                    'license_number' => $request->license_number,
-                    'last_name' => $l,
-                    'first_name' => $f,
-                    'middle_name' => $m,
-                    'birth_date' => $birth_date->format('Y-m-d')
-                ]);
+                $violator->license_number = $request->license_number;
+                $violator->last_name = $l;
+                $violator->first_name = $f;
+                $violator->middle_name = $m;
+                $violator->birth_date = $birth_date->format('Y-m-d');
                 $violator->save();
             }
             $status = "Incomplete";

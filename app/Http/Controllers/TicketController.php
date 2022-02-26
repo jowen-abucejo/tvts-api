@@ -204,11 +204,9 @@ class TicketController extends Controller
         try{
             $ticket = Ticket::find($ticket_id);
             $date = $request->apprehension_datetime? new DateTime($request->apprehension_datetime): now();
-            $ticket->update([
-                'ticket_number' => $request->ticket_number,
-                'vehicle_type' => $request->vehicle_type,
-                'datetime_of_apprehension' => $date->format('Y-m-d H:i:s'),
-            ]);
+            $ticket->ticket_number = $request->ticket_number;
+            $ticket->vehicle_type =  $request->vehicle_type;
+            $ticket->datetime_of_apprehension = $date->format('Y-m-d H:i:s');
             $ticket->save();
 
             app('\App\Http\Controllers\ViolatorController')->update($request, $ticket->violator()->id);

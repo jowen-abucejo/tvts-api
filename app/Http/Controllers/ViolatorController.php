@@ -188,14 +188,14 @@ class ViolatorController extends Controller
             $f = Str::title(preg_replace('!\s+!',' ', $request->first_name));
             $m = ($request->middle_name)? Str::title(preg_replace('!\s+!',' ', $request->middle_name)) : '';
             $birth_date = new DateTime($request->birth_date);
-            if($violator_id && intval($violator_id)){
-                $violator->license_number = $request->license_number;
-                $violator->last_name = $l;
-                $violator->first_name = $f;
-                $violator->middle_name = $m;
-                $violator->birth_date = $birth_date->format('Y-m-d');
-                $violator->save();
-            }
+
+            $violator->license_number = $request->license_number;
+            $violator->last_name = $l;
+            $violator->first_name = $f;
+            $violator->middle_name = $m;
+            $violator->birth_date = $birth_date->format('Y-m-d');
+            $violator->save();
+
             $status = "Incomplete";
             foreach ($violator->extraProperties() as $ext) {
                 $key = $ext->PropertyDescription()->property;
@@ -217,7 +217,6 @@ class ViolatorController extends Controller
                 "update_status" => $status
             ]);
         } catch (\Exception $err) {
-            return $err;
             return response()->json([
                 "update_status" => $status
             ]);

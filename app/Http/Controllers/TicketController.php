@@ -196,8 +196,7 @@ class TicketController extends Controller
     public function update(Request $request, $ticket_id)
     {
         $status = "Failed";
-        return $request->all();
-        if(!$ticket_id)  return response()->json([
+        if(!$ticket_id || !intval($ticket_id))  return response()->json([
             "update_status" => $status
         ]);
 
@@ -210,7 +209,7 @@ class TicketController extends Controller
             $ticket->datetime_of_apprehension = $date->format('Y-m-d H:i:s');
             $ticket->save();
 
-            // app('\App\Http\Controllers\ViolatorController')->update($request, $ticket->violator()->id);
+            app('\App\Http\Controllers\ViolatorController')->update($request, $ticket->violator()->id);
 
             $status = "Partial";
 

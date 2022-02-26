@@ -174,7 +174,7 @@ class ViolatorController extends Controller
      * @param   number $violator_id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $violator_id)
+    public function update(Request $request, $violator_id, $status_response = true)
     {
         $status = "Failed";
         
@@ -212,8 +212,10 @@ class ViolatorController extends Controller
                     $ext->save(); ;
                 }
             }
+            if($status_response) return true;
             return new ViolatorResource(Violator::find($violator_id));
         } catch (\Exception $err) {
+            if($status_response) return false;
             return response()->json([
                 "update_status" => $status
             ]);

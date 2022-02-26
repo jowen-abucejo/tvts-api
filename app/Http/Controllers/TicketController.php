@@ -234,7 +234,7 @@ class TicketController extends Controller
             $status = "Complete";
 
             return response()->json([
-                $status
+                $request->all()
             ]);
         } catch (\Exception $e) {
             return response($e);

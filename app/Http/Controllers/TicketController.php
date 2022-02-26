@@ -251,7 +251,8 @@ class TicketController extends Controller
      */
     public function destroy($ticket_id)
     {
-        $deleted = Ticket::find($ticket_id)->delete();
+        $deleted = Ticket::find($ticket_id);
+        $deleted->delete();
         return response()->json(['deleted' => $deleted->trashed()]);
     }
 

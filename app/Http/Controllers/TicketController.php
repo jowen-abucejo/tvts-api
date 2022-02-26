@@ -203,13 +203,14 @@ class TicketController extends Controller
 
         try{
             $ticket = Ticket::find($ticket_id);
-            $date = $request->apprehension_datetime? new DateTime($request->apprehension_datetime): now();
+            $date = new DateTime($request->apprehension_datetime);
+
             $ticket->ticket_number = $request->ticket_number;
-            $ticket->vehicle_type =  $request->vehicle_type;
+            $ticket->vehicle_type = $request->vehicle_type;
             $ticket->datetime_of_apprehension = $date->format('Y-m-d H:i:s');
             $ticket->save();
 
-            app('\App\Http\Controllers\ViolatorController')->update($request, $ticket->violator()->id);
+            // app('\App\Http\Controllers\ViolatorController')->update($request, $ticket->violator()->id);
 
             $status = "Partial";
 
@@ -238,7 +239,7 @@ class TicketController extends Controller
             ]);
         } catch (\Exception $e) {
             return response()->json([
-                $request->all()
+                $e
             ]);
         }
 

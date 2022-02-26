@@ -212,10 +212,7 @@ class ViolatorController extends Controller
                     $ext->save(); ;
                 }
             }
-            $status = "Complete";
-            return response()->json([
-                "update_status" => $status
-            ]);
+            return new ViolatorResource(Violator::find($violator_id));
         } catch (\Exception $err) {
             return response()->json([
                 "update_status" => $status

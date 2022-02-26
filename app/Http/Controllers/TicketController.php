@@ -209,12 +209,12 @@ class TicketController extends Controller
             $ticket->datetime_of_apprehension = $date->format('Y-m-d H:i:s');
             $ticket->save();
 
-            //app('\App\Http\Controllers\ViolatorController')->update($request, $ticket->violator()->id);
+            $violator = app('\App\Http\Controllers\ViolatorController')->update($request, $ticket->violator()->id);
 
             $status = "Partial";
 
             $violation_ids = explode(',',$request->committed_violations);
-            $ticket->violations()->attach($violation_ids);
+            $ticket->violations()->sync($violation_ids);
 
             foreach ($ticket->extraProperties() as $ext) {
                 $key = $ext->PropertyDescription()->property;
@@ -228,13 +228,14 @@ class TicketController extends Controller
                     }
                 } else {
                     $ext->property_value = $request->input($key);
-                    $ext->save(); ;
+                    $ext->save();
                 }
             }
-            $status = "Complete";
-
+            $ticketR = new TicketResource(Ticket::find($ticket_id));
             return response()->json([
-                $request->all()
+                $ticketR,
+                $violator,
+                't_ext' => $ticket->extraProperties()
             ]);
         } catch (\Exception $e) {
             return response($e);

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\ViolationTypeResource;
+use App\Models\Violation;
 use App\Models\ViolationType;
 use Illuminate\Http\Request;
 
@@ -68,12 +69,35 @@ class ViolationTypeController extends Controller
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\ViolationType  $violationType
+     * @param  number  $violation_type_id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, ViolationType $violationType)
+    public function update(Request $request, $violation_type_id, $status_response = false)
     {
-        //
+        $status = "Failed";
+        
+        if(!$violation_type_id)  return response()->json([
+            "update_status" => $status
+        ]);
+        
+        try {
+            $violation_type = ViolationType::find($violation_type_id);
+            $penalties = str_replace(' ', '', $request->penalties);
+
+            $violation_type->type = $request->license_number;
+            $violation_type->vehicle_type = $request->vehicle_type;
+            $violation_type->penalties = $penalties;
+            $violation_type->save();
+
+            $status = "Incomplete";
+            if($status_response) return true;
+            return new ViolationTypeResource(ViolationType::find($violation_type_id));
+        } catch (\Exception $err) {
+            if($status_response) return false;
+            return response()->json([
+                "update_status" => $status
+            ]);
+        }
     }
 
     /**

@@ -146,7 +146,6 @@ class ViolatorController extends Controller
             $f = Str::title(preg_replace('!\s+!',' ', $request->first_name));
             $m = ($request->middle_name)? Str::title(preg_replace('!\s+!',' ', $request->middle_name)) : '';
             $birth_date = new DateTime($request->birth_date);
-            // $violator = Violator::withCount('tickets')->where('last_name', $l)->where('first_name', $f)->where('middle_name', $m)->where('birth_date', $birth_date->format('Y-m-d'))->first();
             $violator = Violator::withCount('tickets')->where([['last_name', $l],['first_name', $f],['middle_name', $m],['birth_date', $birth_date->format('Y-m-d')]])->first();
         } else if ($request->license_number){
             $violator = Violator::withCount('tickets')->where('license_number', $request->license_number)->first();
@@ -174,7 +173,7 @@ class ViolatorController extends Controller
      * @param   number $violator_id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $violator_id, $status_response = true)
+    public function update(Request $request, $violator_id, $status_response = false)
     {
         $status = "Failed";
         

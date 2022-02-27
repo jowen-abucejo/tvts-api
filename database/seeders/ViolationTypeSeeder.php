@@ -37,7 +37,7 @@ class ViolationTypeSeeder extends Seeder
             ],
         ];
         foreach ($violation_types as $violation_type) {
-            ViolationType::create($violation_type);
+            ViolationType::create($violation_type);          
         }
     }
 }

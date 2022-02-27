@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\AssignTypes;
 use App\Models\Violation;
 use Illuminate\Database\Seeder;
 
@@ -28,11 +29,14 @@ class ViolationSeeder extends Seeder
         ];
         foreach ($minor_violations as $violation) {
             $violation = Violation::create($violation);
-            $violation->violation_types()->attach([1,2]);
+            $assign = AssignTypes::create(['violation_id' => $violation->id, 'violation_type_id' => 1]);
+            $assign->delete();
+            AssignTypes::create(['violation_id' => $violation->id, 'violation_type_id' => 2]);
         }
         foreach ($major_violations as $violation) {
             $violation = Violation::create($violation);
-            $violation->violation_types()->attach([3,4]);
+            AssignTypes::create(['violation_id' => $violation->id, 'violation_type_id' => 3]);
+            AssignTypes::create(['violation_id' => $violation->id, 'violation_type_id' => 4]);
         }
     }
 }

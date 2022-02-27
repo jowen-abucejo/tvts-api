@@ -20,5 +20,12 @@ class DatabaseSeeder extends Seeder
             'password' => Hash::make('admin'),
             'user_type' => 'admin',
         ]);
+
+        \App\Models\User::create([
+            'name'=> 'EnforcernF EnforcernM EnforcernL',
+            'username' => 'user1',
+            'password' => Hash::make('user1'),
+            'user_type' => 'enforcer',
+        ]);
     }
 }

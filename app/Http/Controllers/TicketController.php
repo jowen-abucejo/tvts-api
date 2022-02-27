@@ -210,7 +210,7 @@ class TicketController extends Controller
             $ticket->save();
             
             $status = "Incomplete";
-            if(!app('\App\Http\Controllers\ViolatorController')->update($request, $ticket->violator->id)) return response()->json([
+            if(!app('\App\Http\Controllers\ViolatorController')->update($request, $ticket->violator->id, true)) return response()->json([
                 "update_status" => $status
             ]);
 
@@ -235,9 +235,8 @@ class TicketController extends Controller
             }
             return new TicketResource(Ticket::find($ticket_id));
         } catch (\Exception $e) {
-            return response($e);
             return response()->json([
-                $e->getMessage()
+                "update_status" => $status
             ]);
         }
 

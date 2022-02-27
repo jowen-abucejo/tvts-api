@@ -37,7 +37,8 @@ class ViolationController extends Controller
                 )->paginate($limit)
             );
         }
-        return ViolationResource::collection(Violation::all());
+        return ViolationResource::collection(Violation::with('violation_types')->whereHas('violation_types')->get()
+        );
     }
 
     /**
@@ -58,19 +59,7 @@ class ViolationController extends Controller
      */
     public function store(Request $request)
     {
-        $model = Violation::create([
-            'violation' => 'Disregarding Traffic Sign/Office/MO',
-            'violation_code' => 'V1',
-        ]);
-        $model->violation_types()->attach([1,2]);
-        $model =Violation::create([
-            'violation' => 'Colorum',
-            'violation_code' => 'V2',
-        ]);
-        $model->violation_types()->attach([3,4]);
         
-    
-        return ViolationResource::collection(Violation::all());
     }
 
     /**
@@ -100,12 +89,35 @@ class ViolationController extends Controller
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Violation  $violation
+     * @param  number  $violation_id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Violation $violation)
+    public function update(Request $request, $violation_id)
     {
-        //
+        $status = "Failed";
+        if(!$violation_id || !intval($violation_id))  return response()->json([
+            "update_status" => $status
+        ]);
+
+        try {
+            $violation = Violation::find($violation_id);
+            $violation->violation = $request->violation;
+            $violation->violation_code = $request->violation_code;
+            $violation->save();
+
+            $status = "Incomplete";
+
+            if(!app('\App\Http\Controllers\ViolationTypeController')->update($request, $request->violation_type_id, true)) return response()->json([
+                "update_status" => $status
+            ]);
+
+            return new ViolationResource(Violation::find($violation_id));
+
+        } catch (\Exception $e) {
+            return response()->json([
+                "update_status" => $status
+            ]);
+        }
     }
 
     /**
@@ -121,28 +133,17 @@ class ViolationController extends Controller
 
     public function groupByVehicleType()
     {
-        $v_group = new Collection();
-        // $vehicle_types = ViolationType::select('id', 'vehicle_type')->get()->groupBy('vehicle_type');
-        $vehicle_types = ViolationType::with('violations')->get(["id", "vehicle_type"])->groupBy('vehicle_type');
-        // foreach ($vehicle_types as $vehicleType) {
-        //     # code...
-        //     $v_group->put($vehicleType, ViolationResource::collection(ViolationType::where('vehicle_type', $vehicleType)->get()));
-        // }
-        // return response()->json(
-        //     [
-        //         'violations'=>$v_group,
-        //         'vehicle_types'=>$vehicle_types
-        //     ]
-        // );
-        // $vtest=[];
-        // foreach ($vehicle_types as $vehicle) {
-        //     $vtest = $vehicle->violations;
-        // }
-            // foreach ($vehicle_types as $type => $value) {
-            //     $v_group->put($type, ViolationResource::collection(Violation::wh))
-            // }
+        if(Auth::user() && Auth::user()->isAdmin()){
+            $vehicle_types = ViolationType::with('violations')->orderBy('vehicle_type', 'ASC')->get(["id", "vehicle_type"])->groupBy('vehicle_type');
+            return response()->json(
+                $vehicle_types
+            );
+        }
+
+        $vehicle_types = ViolationType::with(['violations'  => function ($query) {
+            $query->whereHas('violation_types')->wherePivotNull('deleted_at');
+        }])->orderBy('vehicle_type', 'ASC')->get(["id", "vehicle_type"])->groupBy('vehicle_type');
         return response()->json(
-            // ViolationType::where('vehicle_type', '2-3-wheel')->get()
             $vehicle_types
         );
     }

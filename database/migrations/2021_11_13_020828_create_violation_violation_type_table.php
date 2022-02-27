@@ -14,15 +14,15 @@ class CreateViolationViolationTypeTable extends Migration
      */
     public function up()
     {
-        Schema::create('violation_violation_type', function (Blueprint $table) {
-            $table->foreignId('violation_id');
-            $table->foreignId('violation_type_id');
-        });
+        // Schema::create('violation_violation_type', function (Blueprint $table) {
+        //     $table->foreignId('violation_id');
+        //     $table->foreignId('violation_type_id');
+        // });
 
-        Artisan::call( 'db:seed', [
-            '--class' => 'ViolationSeeder',
-            '--force' => true ]
-        );
+        // Artisan::call( 'db:seed', [
+        //     '--class' => 'ViolationSeeder',
+        //     '--force' => true ]
+        // );
     }
 
     /**
@@ -32,6 +32,6 @@ class CreateViolationViolationTypeTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('violation_violation_type');
+        // Schema::dropIfExists('violation_violation_type');
     }
 }

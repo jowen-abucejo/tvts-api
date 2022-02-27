@@ -28,13 +28,13 @@ class ViolationSeeder extends Seeder
             ]
         ];
         foreach ($minor_violations as $violation) {
-            $violation = Violation::create($violation);
+            // $violation = Violation::create($violation);
             $assign = AssignTypes::create(['violation_id' => 1, 'violation_type_id' => 1]);
             $assign->delete();
             AssignTypes::create(['violation_id' => 1, 'violation_type_id' => 2]);
         }
         foreach ($major_violations as $violation) {
-            $violation = Violation::create($violation);
+            // $violation = Violation::create($violation);
             AssignTypes::create(['violation_id' => 2, 'violation_type_id' => 3]);
             AssignTypes::create(['violation_id' => 2, 'violation_type_id' => 4]);
         }

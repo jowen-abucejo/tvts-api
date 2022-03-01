@@ -172,6 +172,7 @@ class TicketController extends Controller
      */
     public function show(Request $request, $ticket_number = null)
     {
+        $ticket_number = trim(strtoupper($ticket_number));
         $ticket = ($ticket_number)? Ticket::where('ticket_number', "$ticket_number")->first() : null;
         if($ticket)
             return new TicketResource($ticket);

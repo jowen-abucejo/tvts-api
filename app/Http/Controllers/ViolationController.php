@@ -66,11 +66,11 @@ class ViolationController extends Controller
                 ])->where('violation_code', $violation_code)->count() : 0;
             if($checkCodeIfExist > 0) return response()->json(["error" => "Violation Code $violation_code Already Exist", "message" => "Please provide a new one."], 400);
 
-
+            $upper_case_column = env('DB_CONNECTION') == 'pgsql' ? 'UPPER("violation") = ?' : 'UPPER(`violation`) = ?';
             $checkViolation = $checkCodeIfExist && $checkCodeIfExist != ''
-                ? Violation::with(['violation_types'])->whereRaw('UPPER(`violation`) = ?', [ strtoupper($new_violation)]
+                ? Violation::with(['violation_types'])->whereRaw($upper_case_column, [ strtoupper($new_violation)]
                     )->where('violation_code', $violation_code)->first()
-                :  Violation::with(['violation_types'])->whereRaw('UPPER(`violation`) = ?', [ strtoupper($new_violation)]
+                :  Violation::with(['violation_types'])->whereRaw($upper_case_column, [ strtoupper($new_violation)]
                     )->first();
             
             if($checkViolation) {
@@ -204,7 +204,7 @@ class ViolationController extends Controller
                         $query->where('violation_type_id', $violation_type_id);
                     }
                 ]
-            )->where('id', '!=', $violation_id)->whereRaw('UPPER(`violation`) = ?',[ strtoupper($new_violation)
+            )->where('id', '!=', $violation_id)->whereRaw($upper_case_column,[ strtoupper($new_violation)
             ])->where('violation_code', $violation_code)->first();
 
             if($checkViolation) {

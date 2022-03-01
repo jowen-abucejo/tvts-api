@@ -50,7 +50,7 @@ class Violation extends Model
      */
     public function violation_types()
     {
-        return $this->belongsToMany(ViolationType::class, AssignTypes::class)->withTrashed();
+        return $this->belongsToMany(ViolationType::class, AssignTypes::class)->withPivot(['created_at','updated_at','deleted_at'])->withTrashed();
         
     }
 }

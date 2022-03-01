@@ -85,6 +85,12 @@ class TicketController extends Controller
      */
     public function store(Request $request)
     {
+        $tnCheck = $request->ticket_number? strtoupper(str_replace(' ', '', $request->ticket_number.'')): null;
+        if($tnCheck != null || $tnCheck != '') {
+            $check = Ticket::where('ticket_number', '=', $tnCheck)->count();
+            if ($check > 0)
+            return response()->json(["error" => "Ticket Creation Failed!", "message" => "Ticket $tnCheck already exist."], 400);
+        }
         $violator_id = $request->violator_id ?? null;
         $violator = app('\App\Http\Controllers\ViolatorController')->store($request, $violator_id);
         $ticket_extra_properties = app('\App\Http\Controllers\ExtraPropertyController')->index($request, 'ticket');
@@ -102,7 +108,7 @@ class TicketController extends Controller
             ) 
             : null;
         if($ticket){
-            $tn = $request->ticket_number? str_replace(' ', '', $request->ticket_number.'') : "TN$ticket->id";
+            $tn = $tnCheck ?? "TN$ticket->id";
             $ticket->ticket_number = $tn;
             $ticket->save();
 
@@ -269,16 +275,15 @@ class TicketController extends Controller
             "violator_count"=>[],
         ];
         $all_ticket_count = Ticket::count();
-        $offense_violator = [];
-
+        
         if (intval($all_ticket_count) < 1)
             return response()->json([
                 "data" => $data,
             ]);
         $data->all_ticket_count = $all_ticket_count;
 
-        $start_date = (!$request->month || !$request->year)? now()->startOfMonth()->toDateString() : Carbon::createFromFormat('Y-m-d', $request->year.'-'.$request->month.'-01')->startOfMonth()->toDateString();
-        $end_date = (!$request->month || !$request->year)? now()->endOfMonth()->toDateString() : Carbon::createFromFormat('Y-m-d', $request->year.'-'.$request->month.'-01')->endOfMonth()->toDateString();
+        $start_date = (!$request->month || !$request->year)? now()->startOfMonth()->toDateTimeString() : Carbon::createFromFormat('Y-m-d', $request->year.'-'.$request->month.'-01')->startOfMonth()->toDateTimeString();
+        $end_date = (!$request->month || !$request->year)? now()->endOfMonth()->toDateTimeString() : Carbon::createFromFormat('Y-m-d', $request->year.'-'.$request->month.'-01')->endOfMonth()->toDateTimeString();
 
         $day_format_query = env('DB_CONNECTION') == 'pgsql' 
             ? DB::raw("to_char(datetime_of_apprehension, 'Mon-DD') as day")
@@ -297,9 +302,9 @@ class TicketController extends Controller
                 $ticket_count_query,
             )
         );
-        $data->daily_ticket = $daily_ticket;
-
+        
         if(count($daily_ticket) >= 5){
+            $data->daily_ticket = $daily_ticket;
             $data->date = ["month"=>now()->monthName, "year"=>now()->year];
             $data->tickets = TicketResource::collection(Ticket::where(
                     'datetime_of_apprehension', '>=', $start_date
@@ -308,7 +313,7 @@ class TicketController extends Controller
                 )->orderBy('datetime_of_apprehension', 'DESC')->get()
             );
         } else {
-            $daily_ticket = Ticket::take(30)->groupBy(['day_order', 'day'])->orderBy('day_order', 'DESC')->get(
+            $data->daily_ticket = Ticket::take(30)->groupBy(['day_order', 'day'])->orderBy('day_order', 'DESC')->get(
                 array(
                     $day_format_query,
                     $day_order_query,
@@ -317,8 +322,8 @@ class TicketController extends Controller
             )->sortBy(['day_order', 'ASC']);
             
             $all_dates = $data->daily_ticket->pluck('day_order');
-            $start_date =  Carbon::createFromFormat('Y-m-d', $all_dates[0])->startOfMonth()->toDateString();
-            $end_date = Carbon::createFromFormat('Y-m-d', $all_dates[count($all_dates)-1])->endOfMonth()->toDateString();
+            $start_date =  Carbon::createFromFormat('Y-m-d', $all_dates[0])->startOfMonth()->toDateTimeString();
+            $end_date = Carbon::createFromFormat('Y-m-d', $all_dates[count($all_dates)-1])->endOfMonth()->toDateTimeString();
 
             $data->date = ["month"=>"Latest", "year"=>''];
             $data->tickets = TicketResource::collection(Ticket::where(

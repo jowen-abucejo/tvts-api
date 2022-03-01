@@ -29,15 +29,14 @@ class ViolationController extends Controller
         if($request->ticket_ids){
             return ViolationResource::collection(Violation::whereIn('id', $request->ticket_ids)->withTrashed()->get());
         }
-        if(Auth::user() && Auth::user()->isAdmin()){
-            return ViolationResource::collection(Violation::withTrashed()->where('violation_code', $like, '%'.$search.'%'
-                )->orWhere('violation', $like, '%'.$search.'%'
-                )->orderBy('violation', $order
-                )->orderBy('violation_code', $order
-                )->paginate($limit)
-            );
-        }
-        return ViolationResource::collection(Violation::with('violation_types')->whereHas('violation_types')->get()
+        return ViolationResource::collection(Violation::withCount(['violation_types', 'tickets']
+            )->with(['violation_types' => function($query) {
+                $query->withCount(['violations']);
+            }])->withTrashed()->where('violation_code', $like, '%'.$search.'%'
+            )->orWhere('violation', $like, '%'.$search.'%'
+            )->orderBy('violation', $order
+            )->orderBy('violation_code', $order
+            )->paginate($limit)
         );
     }
 
@@ -59,30 +58,117 @@ class ViolationController extends Controller
      */
     public function store(Request $request)
     {
-        
+        try {
+            $new_violation = preg_replace('!\s+!',' ', trim($request->violation));
+            $violation_code = $request->violation_code? strtoupper(preg_replace('!\s+!',' ', trim($request->violation_code))) : null;
+
+            $checkCodeIfExist = $violation_code? Violation::whereRaw('UPPER(`violation`) != ?',[ strtoupper($new_violation)
+                ])->where('violation_code', $violation_code)->count() : 0;
+            if($checkCodeIfExist > 0) return response()->json(["error" => "Violation Code $violation_code Already Exist", "message" => "Please provide a new one."], 400);
+
+
+            $checkViolation = $checkCodeIfExist && $checkCodeIfExist != ''
+                ? Violation::with(['violation_types'])->whereRaw('UPPER(`violation`) = ?', [ strtoupper($new_violation)]
+                    )->where('violation_code', $violation_code)->first()
+                :  Violation::with(['violation_types'])->whereRaw('UPPER(`violation`) = ?', [ strtoupper($new_violation)]
+                    )->first();
+            
+            if($checkViolation) {
+                $type = $request->type;
+                $vehicle_type = $request->vehicle_type;
+
+                $violation_type_check = $checkViolation->violation_types->first()->type;
+                $violation_vehicle_type_check = $checkViolation->violation_types->where('type', $type)->where('vehicle_type', $vehicle_type)->count();
+                if($violation_type_check != $type)
+                    return response()->json(["error" => "Already Set as $violation_type_check Offense", "message" => "Please set as $violation_type_check or provide new violation"], 400);
+                if($violation_vehicle_type_check > 0 )
+                    return response()->json(["error" => "Violation Already Exist!", "message" => "Please provide a new one"], 400);
+                    
+                $penalties = preg_replace("/([^0-9,]+)/", '', $request->penalties);
+                $checkViolation->violation_types()->firstOrCreate([
+                    "type" => $type,
+                    "vehicle_type" => $vehicle_type,
+                    "penalties" => $penalties,
+                ],[])->save();
+    
+                return new ViolationResource($checkViolation);        
+            }
+
+            $violation_model = Violation::create(
+                [
+                    'violation' => $new_violation,
+                ]
+            );
+
+            $violation_model->violation_code = $violation_code?? "V".$violation_model->id;
+            $violation_model->save();
+            
+
+            $penalties = preg_replace("/([^0-9,]+)/", '', $request->penalties);
+            $violation_model->violation_types()->firstOrCreate([
+                "type" => $request->type,
+                "vehicle_type" => $request->vehicle_type,
+                "penalties" => $penalties,
+            ],[])->save();
+
+            return new ViolationResource($violation_model);
+        } catch (\Exception $e) {
+            return response()->json(["error" => "Violation Failed to Saved!", "message" => "Please try again."], 400);
+        }
     }
 
     /**
      * Display the specified resource.
      *
-     * @param  \App\Models\Violation  $violation
+     * @param  number  $violation_id
+     * @param  number  $violation_type_id
      * @return \Illuminate\Http\Response
      */
-    public function show(Request $request, $id)
+    public function show(Request $request, $violation_id = null, $violation_type_id = null)
     {
-        $v = Violation::where('id', $id)->withTrashed()->first();
-        return new ViolationResource($v);
+        if(!$violation_id || !intval($violation_id) || !$violation_type_id || !intval($violation_type_id)) return response(null, 404);
+
+        $violation = Violation::with(
+            ['violation_types' => 
+                function($query) use ($violation_type_id) {
+                    $query->find($violation_type_id);
+                }
+            ]
+        )->find($violation_id);
+        return new ViolationResource($violation);
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Update the status of violation's specific type
      *
-     * @param  \App\Models\Violation  $violation
+     * @param  number $violation_id
+     * @param  number $violation_type_id
      * @return \Illuminate\Http\Response
      */
-    public function edit(Violation $violation)
+    public function edit($violation_id, $violation_type_id)
     {
-        //
+        if(!$violation_id || !intval($violation_id) || !$violation_type_id || !intval($violation_type_id))         
+            return response()->json(['update_status' => false]);
+        try {
+            $violation = Violation::find($violation_id);
+
+            if(!$violation)
+                return response()->json(['deleted' => false]);
+    
+            $violation_type = $violation->violation_types()->find($violation_type_id);
+
+            if($violation_type->pivot->deleted_at != null) {
+                $violation_type->pivot->deleted_at = null;
+                $violation_type->pivot->save();
+            } else {
+                $violation_type->pivot->deleted_at = now()->format('Y-m-d H:i:s');
+                $violation_type->pivot->save();
+            }
+            return response()->json(['update_status' => true]);
+
+        } catch (\Exception $e) {
+            return response($e);
+        }
     }
 
     /**
@@ -92,30 +178,75 @@ class ViolationController extends Controller
      * @param  number  $violation_id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $violation_id)
+    public function update(Request $request, $violation_id = null, $violation_type_id = null)
     {
-        $status = "Failed";
-        if(!$violation_id || !intval($violation_id))  return response()->json([
-            "update_status" => $status
-        ]);
-
-        try {
-            $violation = Violation::find($violation_id);
-            $violation->violation = $request->violation;
-            $violation->violation_code = $request->violation_code;
-            $violation->save();
-
-            $status = "Incomplete";
-
-            if(!app('\App\Http\Controllers\ViolationTypeController')->update($request, $request->violation_type_id, true)) return response()->json([
-                "update_status" => $status
+        if(!$violation_id || !intval($violation_id) || !$violation_type_id || !intval($violation_type_id))  
+            return response()->json([
+                "update_status" => "Failed"
             ]);
 
-            return new ViolationResource(Violation::find($violation_id));
+        try {
+            $violation = Violation::withCount('tickets')->with(
+                ['violation_types' => 
+                    function($query) use ($violation_type_id) {
+                        $query->withCount('violations')->where('violation_type_id',$violation_type_id);
+                    }
+                ]
+            )->find($violation_id);
+
+            $new_violation = preg_replace('!\s+!',' ', trim($request->violation));
+            $violation_code = strtoupper(preg_replace('!\s+!',' ', trim($request->violation_code)));
+
+            $checkViolation = Violation::withCount(
+                ['violation_types' => 
+                    function($query) use($violation_type_id) {
+                        $query->where('violation_type_id', $violation_type_id);
+                    }
+                ]
+            )->where('id', '!=', $violation_id)->whereRaw('UPPER(`violation`) = ?',[ strtoupper($new_violation)
+            ])->where('violation_code', $violation_code)->first();
+
+            if($checkViolation) {
+                if($checkViolation->violation_types_count > 0 )
+                    return response()->json(["error" => "Violation Already Exist!", "message" => "Please try a different one."], 400);
+                $penalties = preg_replace("/([^0-9,]+)/", '', $request->penalties);
+                $checkViolation->violation_types()->firstOrCreate([
+                    "type" => $request->type,
+                    "vehicle_type" => $request->vehicle_type,
+                    "penalties" => $penalties,
+                ],[])->save();
+    
+                return new ViolationResource($checkViolation);        
+            }
+
+            if($violation->tickets_count === 0) {
+                $violation->violation = $request->violation;
+                $violation->violation_code = $request->violation_code;
+                $violation->save();
+            }
+
+            $violation_type = $violation->violation_types->find($violation_type_id);
+            if($violation->tickets_count === 0 && $violation_type && $violation_type->violations_count === 1){
+                $violation_type->forceDelete();
+            }
+
+            $violation->violation_types()->detach($violation_type_id);
+            
+            $penalties = preg_replace("/([^0-9,]+)/", '', $request->penalties);
+            $violation->violation_types()->firstOrCreate([
+                "type" => $request->type,
+                "vehicle_type" => $request->vehicle_type,
+                "penalties" => $penalties,
+            ],[])->save();
+
+            return new ViolationResource($violation);
 
         } catch (\Exception $e) {
             return response()->json([
-                "update_status" => $status
+                "data" => $e,
+            ], 400);
+            return response()->json([
+                "update_status" => $e
             ]);
         }
     }
@@ -123,12 +254,51 @@ class ViolationController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Models\Violation  $violation
+     * @param  number $violation_id
+     * @param  number $violation_type_id
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Violation $violation)
+    public function destroy($violation_id, $violation_type_id)
     {
-        //
+        if(!$violation_id || !intval($violation_id) || !$violation_type_id || !intval($violation_type_id))         
+            return response()->json(['deleted' => false]);
+        try {
+            $deleted = Violation::withCount(['tickets', 'violation_types'])->with(
+                ['violation_types' => 
+                    function($query) use ($violation_type_id) {
+                        $query->withCount('violations')->where('violation_type_id', $violation_type_id);
+                    }
+                ]
+            )->find($violation_id);
+
+            if(!$deleted)
+                return response()->json(['deleted' => false]);
+    
+            $violation_type = $deleted->violation_types->find($violation_type_id);
+    
+            if($deleted && $deleted->tickets_count === 0 && $deleted->violation_types_count <= 1){
+                if($violation_type && $violation_type->violations_count === 1){
+                    $violation_type->forceDelete();
+                }
+                $deleted->violation_types()->detach($violation_type_id);
+                $deleted->forceDelete();
+                return response()->json(['deleted' => true]);
+            }
+
+            if($deleted && $deleted->tickets_count === 0){
+                if($violation_type && $violation_type->violations_count === 1){
+                    $violation_type->forceDelete();
+                }
+                $deleted->violation_types()->detach($violation_type_id);
+                return response()->json(['deleted' => true]);
+            }
+
+            $violation_type->pivot->deleted_at = now()->format('Y:m:d H:i:s');
+            return response()->json(['deleted' => true]);
+        } catch (\Exception $e) {
+            return response()->json(['deleted' => false]);
+        }
+        
     }
 
     public function groupByVehicleType()

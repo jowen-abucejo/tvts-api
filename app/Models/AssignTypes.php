@@ -20,6 +20,17 @@ class AssignTypes extends Model
         'violation_type_id',
     ];
 
+     /**
+     * The attributes that should be cast.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'deleted_at' => 'datetime',
+    ];
+
     /**
      * Get the violation that owns the AssignTypes
      *
@@ -38,6 +49,16 @@ class AssignTypes extends Model
     public function violation_type()
     {
         return $this->belongsTo(ViolationType::class, 'violation_type_id')->withTrashed();
+    }
+
+    /**
+     * Get all of the tickets for the AssignTypes
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasManyThrough
+     */
+    public function tickets()
+    {
+        return $this->hasManyThrough(Ticket::class, Violation::class);
     }
 
 

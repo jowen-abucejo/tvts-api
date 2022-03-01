@@ -76,15 +76,18 @@ class ViolationTypeController extends Controller
     {
         $status = "Failed";
         
-        if(!$violation_type_id)  return response()->json([
-            "update_status" => $status
-        ]);
+        if(!$violation_type_id || !intval($violation_type_id)) {
+            if($status_response) return false;
+             return response()->json([
+                "update_status" => $status
+            ]);
+        }
         
         try {
             $violation_type = ViolationType::find($violation_type_id);
-            $penalties = str_replace(' ', '', $request->penalties);
+            $penalties = preg_replace("/([^0-9,]+)/", '', $request->penalties);
 
-            $violation_type->type = $request->license_number;
+            $violation_type->type = $request->type;
             $violation_type->vehicle_type = $request->vehicle_type;
             $violation_type->penalties = $penalties;
             $violation_type->save();

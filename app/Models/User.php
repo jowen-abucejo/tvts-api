@@ -70,6 +70,13 @@ class User extends Authenticatable
         return false;
     }
 
+    public function isEnforcer(){
+        if($this->user_type == "enforcer"){
+            return true;
+        }
+        return false;
+    }
+
     /**
      * Get all of the ticket issued by the User
      *

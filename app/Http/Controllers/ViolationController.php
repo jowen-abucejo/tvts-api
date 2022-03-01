@@ -113,6 +113,7 @@ class ViolationController extends Controller
 
             return new ViolationResource($violation_model);
         } catch (\Exception $e) {
+            return response($e);
             return response()->json(["error" => "Violation Failed to Saved!", "message" => "Please try again."], 400);
         }
     }

@@ -61,13 +61,16 @@ class ViolationController extends Controller
         try {
             $new_violation = preg_replace('!\s+!',' ', trim($request->violation));
             $violation_code = $request->violation_code? strtoupper(preg_replace('!\s+!',' ', trim($request->violation_code))) : null;
-
-            $checkCodeIfExist = $violation_code? Violation::whereRaw('UPPER(`violation`) != ?',[ strtoupper($new_violation)
-                ])->where('violation_code', $violation_code)->count() : 0;
-            if($checkCodeIfExist > 0) return response()->json(["error" => "Violation Code $violation_code Already Exist", "message" => "Please provide a new one."], 400);
-
+            $penalties = preg_replace("/([^0-9,]+)/", '', $request->penalties);
             $upper_case_column = env('DB_CONNECTION') == 'pgsql' ? 'UPPER("violation") = ?' : 'UPPER(`violation`) = ?';
-            $checkViolation = $checkCodeIfExist && $checkCodeIfExist != ''
+
+
+            $checkCodeIfExist = $violation_code? Violation::whereRaw($upper_case_column, [ strtoupper($new_violation)
+                ])->orWhere('violation_code', $violation_code)->count() : 0;
+            if($checkCodeIfExist > 1) 
+                return response()->json(["error" => "Violation Already Exist!", "message" => "Please provide a new one"], 400);
+
+            $checkViolation = $checkCodeIfExist && $violation_code != ''
                 ? Violation::with(['violation_types'])->whereRaw($upper_case_column, [ strtoupper($new_violation)]
                     )->where('violation_code', $violation_code)->first()
                 :  Violation::with(['violation_types'])->whereRaw($upper_case_column, [ strtoupper($new_violation)]
@@ -77,19 +80,20 @@ class ViolationController extends Controller
                 $type = $request->type;
                 $vehicle_type = $request->vehicle_type;
 
-                $violation_type_check = $checkViolation->violation_types->first()->type;
-                $violation_vehicle_type_check = $checkViolation->violation_types->where('type', $type)->where('vehicle_type', $vehicle_type)->count();
+                $violation_type_check = $checkViolation->violation_types->count() > 0 ? $checkViolation->violation_types->first()->type : $type;
+                $violation_vehicle_type_check = $checkViolation->violation_types->count() > 0 ? $checkViolation->violation_types->where('type', $type)->where('vehicle_type', $vehicle_type)->count() : 0;
                 if($violation_type_check != $type)
                     return response()->json(["error" => "Already Set as $violation_type_check Offense", "message" => "Please set as $violation_type_check or provide new violation"], 400);
                 if($violation_vehicle_type_check > 0 )
                     return response()->json(["error" => "Violation Already Exist!", "message" => "Please provide a new one"], 400);
                     
-                $penalties = preg_replace("/([^0-9,]+)/", '', $request->penalties);
-                $checkViolation->violation_types()->firstOrCreate([
-                    "type" => $type,
-                    "vehicle_type" => $vehicle_type,
+                $new_type = ViolationType::firstOrNew([
+                    "type" => $request->type,
+                    "vehicle_type" => $request->vehicle_type,
                     "penalties" => $penalties,
-                ],[])->save();
+                ],[]);
+                $new_type->save();
+                $checkViolation->violation_types()->attach($new_type->id);
     
                 return new ViolationResource($checkViolation);        
             }
@@ -100,21 +104,20 @@ class ViolationController extends Controller
                 ]
             );
 
-            $violation_model->violation_code = $violation_code?? "V".$violation_model->id;
+            $violation_model->violation_code = $violation_code && $violation_code != ''?? "V".$violation_model->id;
             $violation_model->save();
             
-
-            $penalties = preg_replace("/([^0-9,]+)/", '', $request->penalties);
-            $violation_model->violation_types()->firstOrCreate([
+            $new_type = ViolationType::firstOrNew([
                 "type" => $request->type,
                 "vehicle_type" => $request->vehicle_type,
                 "penalties" => $penalties,
-            ],[])->save();
+            ],[]);
+            $new_type->save();
+            $violation_model->violation_types()->attach($new_type->id);
 
             return new ViolationResource($violation_model);
         } catch (\Exception $e) {
-            return response($e);
-            return response()->json(["error" => "Violation Failed to Saved!", "message" => "Please try again."], 400);
+            return response()->json(["error" => "Violation Failed to Save!", "message" => $e->getMessage()], 400);
         }
     }
 
@@ -168,7 +171,7 @@ class ViolationController extends Controller
             return response()->json(['update_status' => true]);
 
         } catch (\Exception $e) {
-            return response($e);
+            return response()->json(["error" => "Violation Failed to Change Status!", "message" => "Please try again."], 400);
         }
     }
 
@@ -187,16 +190,14 @@ class ViolationController extends Controller
             ]);
 
         try {
-            $violation = Violation::withCount('tickets')->with(
-                ['violation_types' => 
-                    function($query) use ($violation_type_id) {
-                        $query->withCount('violations')->where('violation_type_id',$violation_type_id);
-                    }
-                ]
-            )->find($violation_id);
-
             $new_violation = preg_replace('!\s+!',' ', trim($request->violation));
             $violation_code = strtoupper(preg_replace('!\s+!',' ', trim($request->violation_code)));
+            $penalties = preg_replace("/([^0-9,]+)/", '', $request->penalties);
+            $upper_case_column = env('DB_CONNECTION') == 'pgsql' ? 'UPPER("violation") = ?' : 'UPPER(`violation`) = ?';
+
+            $checkCodeIfExist = $violation_code? Violation::where('id', '!=', $violation_id)->where('violation_code', $violation_code)->count() : 0;
+            if($checkCodeIfExist > 0)
+                return response()->json(["error" => "Violation Code $violation_code Already Exist", "message" => "Please provide a new one."], 400);    
 
             $checkViolation = Violation::withCount(
                 ['violation_types' => 
@@ -205,50 +206,50 @@ class ViolationController extends Controller
                     }
                 ]
             )->where('id', '!=', $violation_id)->whereRaw($upper_case_column,[ strtoupper($new_violation)
-            ])->where('violation_code', $violation_code)->first();
+            ])->first();
 
             if($checkViolation) {
-                if($checkViolation->violation_types_count > 0 )
-                    return response()->json(["error" => "Violation Already Exist!", "message" => "Please try a different one."], 400);
-                $penalties = preg_replace("/([^0-9,]+)/", '', $request->penalties);
-                $checkViolation->violation_types()->firstOrCreate([
-                    "type" => $request->type,
-                    "vehicle_type" => $request->vehicle_type,
-                    "penalties" => $penalties,
-                ],[])->save();
-    
-                return new ViolationResource($checkViolation);        
+                return response()->json(["error" => "Violation Already Exist!", "message" => "Please try a different one."], 400);
             }
+
+            $violation = Violation::withCount('tickets')->with(
+                ['violation_types' => 
+                    function($query) use ($violation_type_id) {
+                        $query->withCount('violations')->where('violation_type_id',$violation_type_id);
+                    }
+                ]
+            )->find($violation_id);
+
+            $violation_type = $violation->violation_types->firstWhere('id', $violation_type_id);
 
             if($violation->tickets_count === 0) {
                 $violation->violation = $request->violation;
                 $violation->violation_code = $request->violation_code;
                 $violation->save();
-            }
 
-            $violation_type = $violation->violation_types->find($violation_type_id);
-            if($violation->tickets_count === 0 && $violation_type && $violation_type->violations_count === 1){
-                $violation_type->forceDelete();
-            }
+                if($violation_type->violations_count === 1) {
+                    $violation_type->penalties = $penalties;
+                    $violation_type->save();
+                    return new ViolationResource($violation->fresh());
+                }    
+            }    
 
-            $violation->violation_types()->detach($violation_type_id);
-            
-            $penalties = preg_replace("/([^0-9,]+)/", '', $request->penalties);
-            $violation->violation_types()->firstOrCreate([
+            $new_type = ViolationType::firstOrNew([
                 "type" => $request->type,
                 "vehicle_type" => $request->vehicle_type,
                 "penalties" => $penalties,
-            ],[])->save();
+            ],[]);
+            $new_type->save();
+            
+            if($violation_type->violations_count === 1) $violation_type->forceDelete();
+
+            $violation->violation_types()->detach($violation_type_id);           
+            $violation->violation_types()->attach($new_type->id);
 
             return new ViolationResource($violation);
 
         } catch (\Exception $e) {
-            return response()->json([
-                "data" => $e,
-            ], 400);
-            return response()->json([
-                "update_status" => $e
-            ]);
+            return response()->json(["error" => "Violation Failed to Update!", "message" => $e->getMessage()], 400);
         }
     }
 

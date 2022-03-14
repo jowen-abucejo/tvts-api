@@ -21,8 +21,8 @@ class ViolationResource extends JsonResource
             "violation_code" => $this->violation_code,
             "violation_types" => ViolationTypeResource::collection($this->violation_types),
             "deleted_at" => $this->deleted_at,
-            "tickets_count" => $this->tickets_count,
-            "violation_types_count" => $this->violation_types_count??0
+            "tickets_count" => $this->when((!auth()->user()->isEnforcer()),$this->tickets_count??$this->tickets->count()),
+            "violation_types_count" => $this->when((!auth()->user()->isEnforcer()), $this->violation_types_count??$this->violation_types->count())
         ];
     }
 }   

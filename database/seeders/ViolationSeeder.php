@@ -81,31 +81,28 @@ class ViolationSeeder extends Seeder
                 'violation_code' => 'V16',
             ],
             [
-                'violation' => 'Colorum/Unfranchised Operation',
+                'violation' => 'No Fare Matrix Display',
                 'violation_code' => 'V17',
             ],
             [
-                'violation' => 'No Fare Matrix Display',
+                'violation' => 'No Garbage Basket/Can',
                 'violation_code' => 'V18',
             ],
             [
-                'violation' => 'No Garbage Basket/Can',
+                'violation' => 'Open Muffler',
                 'violation_code' => 'V19',
             ],
             [
-                'violation' => 'Open Muffler',
-                'violation_code' => 'V20',
-            ],
-            [
                 'violation' => 'Coding',
-                'violation_code' => 'V21',
+                'violation_code' => 'V20',
             ],
         ];
         $major_violations = [
             [
-                'violation' => 'Colorum',
-                'violation_code' => 'V22',
-            ]
+                'violation' => 'Colorum/Unfranchised Operation',
+                'violation_code' => 'V21',
+            ],
+
         ];
         foreach ($minor_violations as $violation) {
             $violation = Violation::create($violation);

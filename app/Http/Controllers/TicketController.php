@@ -6,6 +6,7 @@ use App\Http\Resources\TicketCollection;
 use App\Http\Resources\TicketResource;
 use App\Mail\TicketIssued;
 use App\Models\Ticket;
+use App\Models\User;
 use Carbon\Carbon;
 use DateTime;
 use Exception;
@@ -25,18 +26,18 @@ class TicketController extends Controller
      */
     public function index(Request $request, $search_with_violator = true)
     {
-        $start_date = $request->start_date? Carbon::createFromFormat('Y-m-d', $request->start_date)->startOfDay() :  null;
-        $end_date = $request->end_date? Carbon::createFromFormat('Y-m-d', $request->end_date)->endOfDay() :  null;
+        $start_date = $request->start_date? Carbon::createFromFormat('Y-m-d', $request->start_date)->startOfDay()->toDateTimeString() :  null;
+        $end_date = $request->end_date? Carbon::createFromFormat('Y-m-d', $request->end_date)->endOfDay()->toDateTimeString() :  null;
 
         $limit = ($request->limit)?? 30;
         $order = ($request->order)?? 'DESC';
-        $search = ($request->search)?? '';
+        $search = ($request->search)? rawurldecode($request->search) : '';
         
         $like = (env('DB_CONNECTION') == 'pgsql') ? 'ILIKE' : 'LIKE';
         if($search_with_violator && !empty($search)){//if tickets can be search with violator details
             $violator_ids = app('\App\Http\Controllers\ViolatorController')->index($request, true);
             if(!empty($violator_ids)){
-                return TicketResource::collection(Ticket::where('id', $like, '%'.$search.'%'
+                return TicketResource::collection(Ticket::with('payment')->where('id', $like, '%'.$search.'%'
                     )->orWhere('ticket_number', $like, '%'.$search.'%'
                     )->orWhereIn('violator_id', $violator_ids
                     )->orderBy('datetime_of_apprehension', $order)->paginate($limit)
@@ -49,7 +50,7 @@ class TicketController extends Controller
         }
 
         if($start_date && $end_date){//if tickets are filtered by date
-            return TicketResource::collection(Ticket::where(
+            return TicketResource::collection(Ticket::with('payment')->where(
                 function ($query) use ($like, $search) {
                     $query->where('id', $like, '%'.$search.'%'
                         )->orWhere('ticket_number', $like, '%'.$search.'%'
@@ -86,6 +87,7 @@ class TicketController extends Controller
     public function store(Request $request)
     {
         $tnCheck = $request->ticket_number? strtoupper(str_replace(' ', '', $request->ticket_number.'')): null;
+        $apprehending_officer = $request->officer_user_id? User::find($request->officer_user_id) : $request->auth()->user();
         if($tnCheck != null || $tnCheck != '') {
             $check = Ticket::where('ticket_number', '=', $tnCheck)->count();
             if ($check > 0)
@@ -98,7 +100,7 @@ class TicketController extends Controller
         if(!$violator) return response('Violator is Null');
         $ticket = 
             $violator && $violator->id ? 
-            auth()->user()->ticketIssued()->create(
+            $apprehending_officer->ticketIssued()->create(
                 [
                     'violator_id' => $violator->id,
                     'offense_number' => intval($violator->tickets_count) + 1,
@@ -108,7 +110,7 @@ class TicketController extends Controller
             ) 
             : null;
         if($ticket){
-            $tn = $tnCheck ?? "TN$ticket->id";
+            $tn = ($tnCheck && (strpos($tnCheck, 'TN') === false || (strpos($tnCheck, 'TN') > 0))) ? $tnCheck : "TN$ticket->id";
             $ticket->ticket_number = $tn;
             $ticket->save();
 
@@ -148,19 +150,10 @@ class TicketController extends Controller
             } catch (\Throwable $th) {
                 $err = $th->getMessage();
             }
-
-            try {
-                $email = $ticket->with(['violator.extraProperties' => function ($query) {
-                    $query->whereRelation('propertyDescription','property', 'email_address');
-                }])->first()->violator->extraProperties[0]->property_value;
-
-            } catch (\Throwable $th) {
-                $err = $th->getMessage();
-            }
            
             return new TicketResource($ticket);
         } else {
-            return response('Ticket is Null');
+            return response('Ticket is Null', 404);
         }
     }
 
@@ -210,10 +203,15 @@ class TicketController extends Controller
         try{
             $ticket = Ticket::find($ticket_id);
             $date = new DateTime($request->apprehension_datetime);
+            $tnCheck = $request->ticket_number? strtoupper(str_replace(' ', '', $request->ticket_number.'')): null;
 
-            $ticket->ticket_number = $request->ticket_number;
+            if($tnCheck && (strpos($tnCheck, 'TN') === false || (strpos($tnCheck, 'TN') > 0)))
+                $ticket->ticket_number = $tnCheck;
             $ticket->vehicle_type = $request->vehicle_type;
             $ticket->datetime_of_apprehension = $date->format('Y-m-d H:i:s');
+            if($request->officer_user_id) {
+                $ticket->issued_by = $request->officer_user_id;
+            }
             $ticket->save();
             
             $status = "Incomplete";
@@ -396,13 +394,13 @@ class TicketController extends Controller
     {
         $limit = ($request->limit)?? 30;
         $order = ($request->order)?? 'DESC';
-        $search = ($request->search)?? '';
+        $search = ($request->search)? rawurldecode($request->search) : '';
         $like = (env('DB_CONNECTION') == 'pgsql') ? 'ILIKE' : 'LIKE';
         $max_fetch_date = $request->max_fetch_date?  new DateTime($request->max_fetch_date) : Carbon::now();
         $max_date_paginated = $request->max_date_paginated?  new DateTime($request->max_date_paginated) : Carbon::now();
 
         //untracked records in pagination
-        $unpaginated_results = TicketResource::collection(Ticket::where(
+        $unpaginated_results = TicketResource::collection(Ticket::with('payment')->where(
                 function ($query) use ($like, $search) {
                     $query->where('id', $like, '%'.$search.'%'
                         )->orWhere('ticket_number', $like, '%'.$search.'%'
@@ -413,7 +411,7 @@ class TicketController extends Controller
         );
 
         //return tracked records in pagination
-        return (new TicketCollection(Ticket::where(
+        return (new TicketCollection(Ticket::with('payment')->where(
             function($query) use($like, $search) {
                 $query->where('id', $like, '%'.$search.'%'
                 )->orWhere('ticket_number', $like, '%'.$search.'%');

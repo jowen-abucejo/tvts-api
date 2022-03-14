@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ExtraProperty extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -15,14 +16,14 @@ class ExtraProperty extends Model
      * @var string[]
      */
     protected $fillable = [
-        "property",
-        "property_owner",
-        "text_label",
-        "data_type",
-        'is_multiple_select',
-        'options',
-        "is_required",
-        "active"
+            "property",
+            "property_owner",
+            "text_label",
+            "data_type",
+            'is_multiple_select',
+            'options',
+            "is_required",
+            "order_in_form"
     ];
 
     /**
@@ -32,7 +33,7 @@ class ExtraProperty extends Model
      */
     public function ticketExtraProperties()
     {
-        return $this->hasMany(TicketExtraProperty::class, 'extra_property_id', 'id');
+        return $this->hasMany(TicketExtraProperty::class, 'extra_property_id');
     }
 
     /**
@@ -42,7 +43,7 @@ class ExtraProperty extends Model
      */
     public function violatorExtraProperties()
     {
-        return $this->hasMany(ViolatorExtraProperty::class, 'extra_property_id', 'id');
+        return $this->hasMany(ViolatorExtraProperty::class, 'extra_property_id');
     }
 
 

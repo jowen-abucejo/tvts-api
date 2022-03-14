@@ -23,6 +23,7 @@ class CreateTicketsTable extends Migration
             $table->foreignId('issued_by')->references('id')->on('users');
             $table->foreignId('payment_id')->nullable()->references('id')->on('payments');           
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

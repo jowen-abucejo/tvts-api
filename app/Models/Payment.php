@@ -18,6 +18,7 @@ class Payment extends Model
         'OR_number',
         'penalties',
         'total_amount',
+        'created_at'
     ];
 
     /**
@@ -27,6 +28,6 @@ class Payment extends Model
      */
     public function ticket()
     {
-        return $this->hasOne(Ticket::class);
+        return $this->hasOne(Ticket::class)->withTrashed();
     }
 }

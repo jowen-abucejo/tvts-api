@@ -17,9 +17,10 @@ class UserResource extends JsonResource
         return [
             "id" => $this->id,
             "name" => $this->name,
-            "user" => $this->username,
+            "username" => $this->username,
             "type" => $this->user_type,
-            "deleted_at" => $this->deleted_at
+            "deleted_at" => $this->deleted_at,
+            "tickets_count" => $this->ticket_issued_count??$this->ticketIssued()->count()
         ];
     }
 }

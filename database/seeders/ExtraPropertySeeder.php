@@ -64,7 +64,7 @@ class ExtraPropertySeeder extends Seeder
                 "property" => "owner_address",
                 "property_owner" => "ticket",
                 "text_label" => "Owner Address",
-                "data_type" => "email",
+                "data_type" => "string",
                 "is_required" =>  false,
             ],
             [

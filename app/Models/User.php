@@ -71,7 +71,7 @@ class User extends Authenticatable
     }
 
     public function isEnforcer(){
-        if($this->user_type == "enforcer"){
+        if($this->user_type == "deputy officer"){
             return true;
         }
         return false;
@@ -84,6 +84,6 @@ class User extends Authenticatable
      */
     public function ticketIssued()
     {
-        return $this->hasMany(Ticket::class, 'issued_by', 'id');
+        return $this->hasMany(Ticket::class, 'issued_by', 'id')->withTrashed();
     }
 }

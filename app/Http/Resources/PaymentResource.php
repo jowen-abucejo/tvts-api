@@ -15,8 +15,12 @@ class PaymentResource extends JsonResource
     public function toArray($request)
     {
         return [
-            'or_number'=>$this->OR_number,
-            'penalties' =>$this->penalties,
+            'id' => $this->id,
+            'or_number' => $this->OR_number,
+            'ticket' => new TicketResource($this->ticket),
+            'ticket_number' => $this->whenLoaded('ticket', $this->ticket->ticket_number ),
+            'date_of_payment' => $this->whenLoaded('ticket', $this->created_at ),
+            'penalties' => explode(',', $this->penalties),
             'total_amount' => $this->total_amount,
         ];
     }

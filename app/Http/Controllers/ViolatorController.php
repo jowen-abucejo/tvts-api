@@ -22,9 +22,9 @@ class ViolatorController extends Controller
     {
         $limit = ($request->limit)?? 30;
         $order = ($request->order)?? 'ASC';
-        $search = ($request->search)?? '';
+        $search = ($request->search)? rawurldecode($request->search) : '';
         $like = (env('DB_CONNECTION') == 'pgsql') ? 'ILIKE' : 'LIKE';
-        $full_name_query = DB::raw("concat_ws('', last_name, first_name, middle_name)");
+        $full_name_query = DB::raw("concat_ws(' ', last_name, first_name, middle_name)");
         if($pluck_id){
            return Violator::where($full_name_query, $like, '%'.$search.'%'
                 )->orWhere('license_number', $like, '%'.$search.'%'

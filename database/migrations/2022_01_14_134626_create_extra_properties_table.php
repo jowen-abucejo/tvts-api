@@ -16,14 +16,16 @@ class CreateExtraPropertiesTable extends Migration
     {
         Schema::create('extra_properties', function (Blueprint $table) {
             $table->id();
-            $table->string("property");
+            $table->string("property")->nullable();
             $table->string("property_owner");
             $table->string("text_label");
             $table->string("data_type");
             $table->string('options')->nullable();
             $table->boolean("is_multiple_select")->nullable()->default(false);
             $table->boolean("is_required");
-            $table->boolean("active")->nullable()->default(true);
+            $table->integer("order_in_form")->nullable()->default(1);
+            $table->timestamps();
+            $table->softDeletes();
         });
 
         if ( \App\Models\ExtraProperty::count() < 1 )

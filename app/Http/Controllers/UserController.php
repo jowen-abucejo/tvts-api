@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Str;
 
 class UserController extends Controller
 {
@@ -18,9 +19,28 @@ class UserController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        return UserResource::collection(User::withTrashed()->get());
+        $limit = ($request->limit)?? 30;
+        $order = ($request->order)?? 'ASC';
+        $search = ($request->search)? rawurldecode($request->search) : '';
+
+        $like = (env('DB_CONNECTION') == 'pgsql') ? 'ILIKE' : 'LIKE';
+
+        if($request->fetch_all === true) {
+            return UserResource::collection(User::withCount('ticketIssued')->withTrashed(
+                )->where('name', $like, '%'.$search.'%'
+                )->orWhere('username', $like, '%'.$search.'%'
+                )->get()
+            );
+        }
+
+        return UserResource::collection(User::withCount('ticketIssued')->withTrashed(
+            )->where('name', $like, '%'.$search.'%'
+            )->orWhere('username', $like, '%'.$search.'%'
+            )->orderBy('name', $order
+            )->orderBy('username', $order
+            )->paginate($limit));
     }
 
     /**
@@ -41,11 +61,16 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
+        $name = Str::title(preg_replace('!\s+!',' ', $request->name));
+        $checkUsername = User::where('username', $request->username)->count();
+
+        if($checkUsername > 0) return response()->json(["error" => "Username Already Exist!", "message" => "Please provide new username."], 400);
+        
         $new_user = User::create([
-            "name" => "admin",
-            "username" => "admin123",
-            "password" => Hash::make("admin"),
-            "user_type" => "admin",
+            "name" => $name,
+            "username" => $request->username,
+            "password" => Hash::make($request->username),
+            "user_type" => $request->user_type,
         ]);
 
         return new UserResource($new_user);
@@ -57,9 +82,15 @@ class UserController extends Controller
      * @param  \App\Models\User  $user_id
      * @return \Illuminate\Http\Response
      */
-    public function show(Request $request)
+    public function show(Request $request, $user_id)
     {
-        return new UserResource(User::where('id', $request->user_id)->first());
+        if(!$user_id)  return response()->json(["error" => "User Account Doesn't Exist", "message" => "No match found for the user account specified."], 400);
+
+        $user = User::find($user_id);
+
+        if(!$user)  return response()->json(["error" => "User Account Doesn't Exist", "message" => "No match found for the user account specified."], 400);
+
+        return new UserResource($user);
     }
 
     /**
@@ -68,8 +99,22 @@ class UserController extends Controller
      * @param  \App\Models\User  $violationType
      * @return \Illuminate\Http\Response
      */
-    public function edit(User $violationType)
+    public function edit(Request $request, $user_id = null)
     {
+        $user = $user_id? User::find($user_id) : $request->user();
+        if(!$user) return response()->json(["error" => "User Account Doesn't Exist", "message" => "No match found for the user account specified."], 400);
+
+        $username = Str::lower(preg_replace('!\s*!','', $user->name));
+        try {
+            $user->update([
+                "username" => $username,
+                "password" => Hash::make($username),
+            ]);
+            $user->save();
+            return response()->json(["update_success" => true]);
+        } catch (\Throwable $th) {
+            return response()->json(["error" => "Unable to Reset Login Credentials!", "message" => "Please try again."], 400);
+        }
     }
 
     /**
@@ -78,23 +123,31 @@ class UserController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request)
-    {
-        $user = $request->user();
-        // $ignoreSelf = ($user->id)?? 0;
-        // $this->validate($request, [
-        //     'password' => 'required',
-        //     'new_password' => 'required|confirmed',
-        //     'username' => [
-        //         'required',
-        //         'string',
-        //         Rule::unique('users')->where(function ($query) use ($request) {
-        //             return $query
-        //                 ->where('username', $request->username);
-        //         })->ignore($ignoreSelf),
-        //     ],
-        // ]);  
+    public function update(Request $request, $user_id = null)
+    {   
+        $user = $user_id? User::find($user_id) : $request->user();
+        if(!$user) return response()->json(["error" => "User Account Doesn't Exist", "message" => "No match found for the user account specified."], 400);
+
+        if($request->user()->isAdmin() && $user_id) {
+            $checkUsername = User::where('username', $request->username)->where('id', '!=', $user->id)->count();
+
+            if($checkUsername > 0) return response()->json(["error" => "Username Already Exist!", "message" => "Please provide new username."], 400);
+    
+            $name = Str::title(preg_replace('!\s+!',' ', $request->name));
+            $user->update([
+                "name" => $name,
+                "user_type" => $request->user_type,
+            ]);
+            $user->save();
+            return response()->json(["update_success" => true]);
+        }
+
         $password_match_user = $this->checkPasswordMatch($request, $user)->getData();
+
+        $checkUsername = User::where('username', $request->username)->where('id', '!=', $user->id)->count();
+
+        if($checkUsername > 0) return response()->json(["error" => "Username Already Exist!", "message" => "Please provide new username."], 401);
+
         if($password_match_user->password_match_status){
             $user->update([
                 "username" => $request->username,
@@ -103,18 +156,45 @@ class UserController extends Controller
             $user->save();
             return response()->json(["update_success" => true]);
         }
-        return response()->json(["update_success" => false]);
+        return response()->json(["error" => "User Account Update Failed!", "message" => ''], 400);
     }
 
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Models\User  $violationType
+     * @param  number $user_id
      * @return \Illuminate\Http\Response
      */
-    public function destroy(User $violationType)
+    public function destroy(Request $request, $user_id)
     {
-        //
+        if(!$user_id) 
+            return response()->json(["error" => "User Account Doesn't Exist", "message" => "No match found for the user account specified."], 400);
+
+
+        $user = User::withTrashed()->withCount('ticketIssued')->find($user_id);
+
+        if(!$user) 
+            return response()->json(["error" => "User Account Doesn't Exist", "message" => "No match found for the user account specified."], 400);
+
+        if(boolval($request->permanentDelete) === false) {            
+
+            if($user->trashed()) {
+                $user->restore();
+                $user->save();
+                return response()->json(['update_status' => true]);
+            }
+
+            $user->delete();
+            return response()->json(['update_status' => $user->trashed()]);
+        }
+
+        if($user->ticket_issued_count > 0) {
+            return response()->json(["error" => "Unable to Delete User Account!", "message" => "User is associated with $user->ticket_issued_count tickets. You can set account as 'NOT ACTIVE' instead."], 400);
+        }
+
+        $user->forceDelete();
+        return response()->json(['deleted' => true]);
+
     }
 
     public function logout(Request $request)

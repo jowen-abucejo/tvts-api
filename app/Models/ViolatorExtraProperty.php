@@ -37,6 +37,6 @@ class ViolatorExtraProperty extends Model
      */
     public function propertyDescription()
     {
-        return $this->belongsTo(ExtraProperty::class, 'extra_property_id');
+        return $this->belongsTo(ExtraProperty::class, 'extra_property_id')->withTrashed();
     }
 }

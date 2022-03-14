@@ -22,7 +22,7 @@ class ViolationTypeResource extends JsonResource
             "penalties" =>explode("," , $this->penalties),
             "deleted_at" => $this->deleted_at,
             "active" => $this->whenPivotLoaded('assign_types', function () { return $this->pivot->deleted_at? false: true;}, true),
-            "violations_count" => $this->violations_count
+            "violations_count" => $this->when((!auth()->user()->isEnforcer()), $this->violations_count?? $this->violations->count())
         ];
     }
 }

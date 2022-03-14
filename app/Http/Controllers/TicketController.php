@@ -87,8 +87,8 @@ class TicketController extends Controller
     public function store(Request $request)
     {
         $tnCheck = $request->ticket_number? strtoupper(str_replace(' ', '', $request->ticket_number.'')): null;
-        $apprehending_officer = $request->officer_user_id? User::find($request->officer_user_id) : $request->auth()->user();
-        if($tnCheck != null || $tnCheck != '') {
+        $apprehending_officer = $request->officer_user_id? User::find($request->officer_user_id) : $request->user();
+        if($tnCheck != null && $tnCheck != '') {
             $check = Ticket::where('ticket_number', '=', $tnCheck)->count();
             if ($check > 0)
             return response()->json(["error" => "Ticket Creation Failed!", "message" => "Ticket $tnCheck already exist."], 400);

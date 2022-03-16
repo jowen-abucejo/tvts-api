@@ -71,14 +71,14 @@ class ExtraPropertyController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  \App\Models\ExtraProperty  $extraProperty
+     * @param  number  $extra_property_id
      * @return \Illuminate\Http\Response
      */
-    public function show(Request $request, $extra_property_id = null)
+    public function show(Request $request, $extra_property_id)
     {
         if(!$extra_property_id) return response()->json(["error" => "No Match Found!", "message" => "No match found for the record specified."], 400);
 
-        $extra_property = ExtraProperty::withTrashed()->withCount('violatorExtraProperties', 'ticketExtraProperties')->find($extra_property_id);
+        $extra_property = ExtraProperty::withTrashed()->withCount('violatorExtraProperties', 'ticketExtraProperties')->find(intval($extra_property_id));
 
         if(!$extra_property) return response()->json(["error" => "No Match Found!", "message" => "No match found for the record specified."], 400);
 

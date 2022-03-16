@@ -140,7 +140,7 @@ class TicketController extends Controller
                     $query->whereRelation('propertyDescription','property', 'mobile_number');
                 }])->first()->violator->extraProperties[0]->property_value;
                 
-                if($mobile && env('APP_ENV') == 'production'){
+                if($mobile){
                     Nexmo::message()->send([
                         'to'=>"63".$mobile,
                         'from'=>'Naic PNP/NTMO',

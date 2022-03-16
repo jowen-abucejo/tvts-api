@@ -142,7 +142,7 @@ class TicketController extends Controller
                 
                 if($mobile){
                     Nexmo::message()->send([
-                        'to'=>"63".$mobile,
+                        'to'=>"+63".$mobile,
                         'from'=>'Naic PNP/NTMO',
                         'text'=>"Citation Ticket $ticket->ticket_number was issued to you. Please appear at the Naic PNP/NTMO  within 72 hours to answer the stated charges.Failing to settle your case within 15 days from date of apprehension will result to the suspension/revocation of your license.",
                     ]);

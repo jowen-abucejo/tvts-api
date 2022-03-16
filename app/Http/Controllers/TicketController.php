@@ -136,9 +136,13 @@ class TicketController extends Controller
             
             $err='';
             try {
-                $mobile = $ticket->with(['violator.extraProperties' => function ($query) {
+                $violator = $ticket->violator()->with(['extraProperties' => function ($query) {
                     $query->whereRelation('propertyDescription','property', 'mobile_number');
-                }])->first()->violator->extraProperties[0]->property_value;
+                }]);
+                $mobile = ($violator && count($violator->extraProperties) > 0)? $violator->extraProperties[0]->property_value : null;
+                // $mobile = $ticket->with(['violator.extraProperties' => function ($query) {
+                //     $query->whereRelation('propertyDescription','property', 'mobile_number');
+                // }])->first()->violator->extraProperties[0]->property_value;
                 
                 if($mobile && env('APP_ENV') == 'production'){
                     Nexmo::message()->send([

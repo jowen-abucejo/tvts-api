@@ -121,7 +121,7 @@ class TicketController extends Controller
                 if($ext->data_type == 'image'){
                     $key = $ext->property.'';
                     $file = ($request->hasFile($key))? $request->file($key) : null;
-                    $filepath = ($file)? $file->store($key.'_'.$ext->id) : 'NA';
+                    $filepath = ($file)? $file->store($key.'_'.$ext->id, 'spaces') : 'NA';
                     $ticket->extraProperties()->create([
                         'extra_property_id' => $ext->id,
                         'property_value' => $filepath,
@@ -379,12 +379,13 @@ class TicketController extends Controller
     public function showImage(Request $request, $image_path)
     {
         $real_path = str_replace(' ','/', $image_path);
-        if (Storage::exists($real_path)) {
-            $metaData = Storage::getMetaData($real_path);
+        if (Storage::disk('spaces')->exists($real_path)) {
+            $metaData = Storage::disk('spaces')->getMetaData($real_path);
             if($metaData == false) {
                 return response()->json(["error" => "File Not Found!"], 404);
             }
-            return response()->file(storage_path('/app').'/'.($real_path));
+            // return response()->file(storage_path('/app').'/'.($real_path));
+            return response(Storage::disk('spaces')->get($real_path));
         }
         return response()->json(["error" => "File Not Found!"], 404);
 

@@ -238,7 +238,8 @@ class UserController extends Controller
 
             return response()->json(
                 [
-                    "user_type" => $user->user_type,
+                    "isAdmin" => $user->isAdmin(),
+                    "isTreasury" => $user->isTreasury(),
                     "access_token" => $token->accessToken,
                     "token_type" => "Bearer",
                     "expires_in" => $expiration

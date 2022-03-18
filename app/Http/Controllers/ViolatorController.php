@@ -106,7 +106,8 @@ class ViolatorController extends Controller
                 if($ext->data_type == 'image'){
                     $key = $ext->property.'';
                     $file = ($request->hasFile($key))? $request->file($key) : null;
-                    $filepath = ($file)? $file->store($key.'_'.$ext->id, 'spaces') : 'NA';                    $violator->extraProperties()->updateOrCreate(
+                    $filepath = ($file)? $file->store($key.'_'.$ext->id, 'spaces') : 'NA';                    
+                    $violator->extraProperties()->updateOrCreate(
                         [
                             'extra_property_id' => $ext->id,
                         ],

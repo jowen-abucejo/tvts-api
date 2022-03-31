@@ -18,22 +18,14 @@ class User extends Authenticatable
      *
      * @var string[]
      */
-    protected $fillable = [
-        'name',
-        'username',
-        'password',
-        'user_type',
-    ];
+    protected $fillable = ["name", "username", "password", "user_type"];
 
     /**
      * The attributes that should be hidden for serialization.
      *
      * @var array
      */
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
+    protected $hidden = ["password", "remember_token"];
 
     /**
      * The attributes that should be cast.
@@ -44,7 +36,6 @@ class User extends Authenticatable
     //     'email_verified_at' => 'datetime',
     // ];
 
-
     /**
      * Find the user instance for the given username.
      *
@@ -53,25 +44,28 @@ class User extends Authenticatable
      */
     public function findForPassport($username)
     {
-        return $this->where('username', $username)->first();
+        return $this->where("username", $username)->first();
     }
 
-    public function isAdmin(){
-        if($this->user_type == "admin"){
+    public function isAdmin()
+    {
+        if ($this->user_type == "admin") {
             return true;
         }
         return false;
     }
 
-    public function isTreasury(){
-        if($this->user_type == "treasury" || $this->user_type == "admin"){
+    public function isTreasury()
+    {
+        if ($this->user_type == "treasury" || $this->user_type == "admin") {
             return true;
         }
         return false;
     }
 
-    public function isEnforcer(){
-        if($this->user_type == "deputy officer"){
+    public function isEnforcer()
+    {
+        if ($this->user_type == "deputy officer") {
             return true;
         }
         return false;
@@ -84,6 +78,6 @@ class User extends Authenticatable
      */
     public function ticketIssued()
     {
-        return $this->hasMany(Ticket::class, 'issued_by', 'id')->withTrashed();
+        return $this->hasMany(Ticket::class, "issued_by", "id")->withTrashed();
     }
 }

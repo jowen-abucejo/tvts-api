@@ -16,13 +16,15 @@ class ViolatorResource extends JsonResource
     {
         return [
             "id" => $this->id,
-            'last_name' => $this->last_name,
-            'first_name'=> $this->first_name,
-            'middle_name'=> $this->middle_name??' ',
-            'birth_date' => $this->birth_date,
-            'license_number' => $this->license_number,
-            'extra_properties' => ViolatorExtraPropertyResource::collection($this->extraProperties),
-            'tickets_count' => $this->tickets_count
-        ];    
+            "last_name" => $this->last_name,
+            "first_name" => $this->first_name,
+            "middle_name" => $this->middle_name ?? " ",
+            "birth_date" => $this->birth_date,
+            "license_number" => $this->license_number,
+            "extra_properties" => ViolatorExtraPropertyResource::collection(
+                $this->extraProperties
+            ),
+            "tickets_count" => $this->tickets_count,
+        ];
     }
 }

@@ -160,12 +160,17 @@ class TicketController extends Controller
             foreach ($ticket_extra_properties as $ext) {
                 if ($ext->data_type == "image") {
                     $key = $ext->property . "";
+                    $folder = $key . "_" . $ext->id;
                     $file = $request->hasFile($key)
                         ? $request->file($key)
                         : null;
-                    $filepath = $file
-                        ? $file->store($key . "_" . $ext->id, "spaces")
-                        : "NA";
+
+                    if ($file) {
+                        if (!Storage::disk("spaces")->exists($folder)) {
+                            Storage::disk("spaces")->makeDirectory($folder);
+                        }
+                    }
+                    $filepath = $file ? $file->store($folder, "spaces") : "NA";
                     $ticket->extraProperties()->create([
                         "extra_property_id" => $ext->id,
                         "property_value" => $filepath,

@@ -60,7 +60,6 @@ return [
             "url" => env("SPACES_URL"),
             "endpoint" => env("SPACES_ENDPOINT"),
             "bucket_endpoint" => true,
-            "visibility" => "public",
         ],
     ],
 

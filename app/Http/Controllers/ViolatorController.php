@@ -115,12 +115,21 @@ class ViolatorController extends Controller
                     $file = $request->hasFile($key)
                         ? $request->file($key)
                         : null;
-                    $folder = $key . "_" . $ext->id;
-                    if (!Storage::disk("spaces")->exists($folder)) {
-                        Storage::disk("spaces")->makeDirectory($folder);
-                    }
+                    $folder = $file
+                        ? $key .
+                            "_" .
+                            $ext->id .
+                            "/" .
+                            time() .
+                            "." .
+                            $file->getClientOriginalExtension()
+                        : null;
+
                     $filepath = $file
-                        ? Storage::putFile($folder, $file, "spaces")
+                        ? Storage::disk("spaces")->put(
+                            $folder,
+                            file_get_contents($file)
+                        )
                         : "NA";
                     $violator->extraProperties()->updateOrCreate(
                         [
@@ -243,12 +252,21 @@ class ViolatorController extends Controller
                     $file = $request->hasFile($key)
                         ? $request->file($key)
                         : null;
-                    $folder = $key . "_" . $ext->id;
-                    if (!Storage::disk("spaces")->exists($folder)) {
-                        Storage::disk("spaces")->makeDirectory($folder);
-                    }
+                    $folder = $file
+                        ? $key .
+                            "_" .
+                            $ext->id .
+                            "/" .
+                            time() .
+                            "." .
+                            $file->getClientOriginalExtension()
+                        : null;
+
                     $filepath = $file
-                        ? Storage::putFile($folder, $file, "spaces")
+                        ? Storage::disk("spaces")->put(
+                            $folder,
+                            file_get_contents($file)
+                        )
                         : null;
                     if ($file && $filepath) {
                         Storage::disk("spaces")->delete($ext->property_value);

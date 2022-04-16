@@ -120,14 +120,17 @@ class ViolatorController extends Controller
                         : null;
 
                     $filepath = $file ? $file->store($folder, "spaces") : "NA";
-                    $violator->extraProperties()->updateOrCreate(
-                        [
-                            "extra_property_id" => $ext->id,
-                        ],
-                        [
-                            "property_value" => $filepath,
-                        ]
-                    );
+                    if ($file && $filepath) {
+                        Storage::disk("spaces")->delete($ext->property_value);
+                        $violator->extraProperties()->updateOrCreate(
+                            [
+                                "extra_property_id" => $ext->id,
+                            ],
+                            [
+                                "property_value" => $filepath,
+                            ]
+                        );
+                    }
                 } else {
                     $violator->extraProperties()->updateOrCreate(
                         [

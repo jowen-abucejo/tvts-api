@@ -90,11 +90,15 @@ class ExtraPropertyController extends Controller
             "property_owner" => $request->property_owner,
             "text_label" => $request->text_label,
             "data_type" => $request->data_type,
-            "is_multiple_select" => boolval($request->is_multiple_select),
+            "is_multiple_select" =>
+                boolval($request->is_multiple_select) &&
+                $request->is_multiple_select === "true",
             "options" => $request->options
                 ? str_replace(",", ";", $request->options)
                 : "",
-            "is_required" => boolval($request->is_required),
+            "is_required" =>
+                boolval($request->is_required) &&
+                $request->is_required === "true",
             "order_in_form" => intval($request->order_in_form),
         ]);
 
@@ -189,14 +193,15 @@ class ExtraPropertyController extends Controller
 
         $extra_property->text_label = $request->text_label;
         $extra_property->order_in_form = intval($request->order_in_form);
-        $extra_property->is_required = boolval($request->is_required);
+        $extra_property->is_required =
+            boolval($request->is_required) && $request->is_required === "true";
 
         if ($total_associated_record === 0) {
             $extra_property->property_owner = $request->property_owner;
             $extra_property->data_type = $request->data_type;
-            $extra_property->is_multiple_select = boolval(
-                $request->is_multiple_select
-            );
+            $extra_property->is_multiple_select =
+                boolval($request->is_multiple_select) &&
+                $request->is_multiple_select === "true";
             $extra_property->options = $request->options
                 ? str_replace(",", ";", $request->options)
                 : "";

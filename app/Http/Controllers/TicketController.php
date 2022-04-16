@@ -163,8 +163,12 @@ class TicketController extends Controller
                     $file = $request->hasFile($key)
                         ? $request->file($key)
                         : null;
+                    $folder = $key . "_" . $ext->id;
+                    if (!Storage::disk("spaces")->exists($folder)) {
+                        Storage::disk("spaces")->makeDirectory($folder);
+                    }
                     $filepath = $file
-                        ? $file->store($key . "_" . $ext->id, "spaces")
+                        ? Storage::putFile($folder, $file, "spaces")
                         : "NA";
                     $ticket->extraProperties()->create([
                         "extra_property_id" => $ext->id,
@@ -299,8 +303,12 @@ class TicketController extends Controller
                     $file = $request->hasFile($key)
                         ? $request->file($key)
                         : null;
+                    $folder = $key . "_" . $ext->id;
+                    if (!Storage::disk("spaces")->exists($folder)) {
+                        Storage::disk("spaces")->makeDirectory($folder);
+                    }
                     $filepath = $file
-                        ? $file->store($key . "_" . $ext->id, "spaces")
+                        ? Storage::putFile($folder, $file, "spaces")
                         : null;
                     if ($file && $filepath) {
                         Storage::disk("spaces")->delete($ext->property_value);

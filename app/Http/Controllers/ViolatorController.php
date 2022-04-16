@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\ViolatorResource;
-use App\Models\Ticket;
 use App\Models\Violator;
 use DateTime;
 use Illuminate\Http\Request;
@@ -116,8 +115,12 @@ class ViolatorController extends Controller
                     $file = $request->hasFile($key)
                         ? $request->file($key)
                         : null;
+                    $folder = $key . "_" . $ext->id;
+                    if (!Storage::disk("spaces")->exists($folder)) {
+                        Storage::disk("spaces")->makeDirectory($folder);
+                    }
                     $filepath = $file
-                        ? $file->store($key . "_" . $ext->id, "spaces")
+                        ? Storage::putFile($folder, $file, "spaces")
                         : "NA";
                     $violator->extraProperties()->updateOrCreate(
                         [
@@ -240,8 +243,12 @@ class ViolatorController extends Controller
                     $file = $request->hasFile($key)
                         ? $request->file($key)
                         : null;
+                    $folder = $key . "_" . $ext->id;
+                    if (!Storage::disk("spaces")->exists($folder)) {
+                        Storage::disk("spaces")->makeDirectory($folder);
+                    }
                     $filepath = $file
-                        ? $file->store($key . "_" . $ext->id, "spaces")
+                        ? Storage::putFile($folder, $file, "spaces")
                         : null;
                     if ($file && $filepath) {
                         Storage::disk("spaces")->delete($ext->property_value);

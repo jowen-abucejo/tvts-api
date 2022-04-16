@@ -160,24 +160,12 @@ class TicketController extends Controller
             foreach ($ticket_extra_properties as $ext) {
                 if ($ext->data_type == "image") {
                     $key = $ext->property . "";
+                    $folder = "/" . $key . "_" . $ext->id;
                     $file = $request->hasFile($key)
                         ? $request->file($key)
                         : null;
-                    $folder = $file
-                        ? $key .
-                            "_" .
-                            $ext->id .
-                            "/" .
-                            time() .
-                            "." .
-                            $file->getClientOriginalExtension()
-                        : null;
-                    $filepath = $file
-                        ? Storage::disk("spaces")->put(
-                            $folder,
-                            file_get_contents($file)
-                        )
-                        : "NA";
+
+                    $filepath = $file ? $file->store($folder, "spaces") : "NA";
                     $ticket->extraProperties()->create([
                         "extra_property_id" => $ext->id,
                         "property_value" => $filepath,
@@ -311,21 +299,8 @@ class TicketController extends Controller
                     $file = $request->hasFile($key)
                         ? $request->file($key)
                         : null;
-                    $folder = $file
-                        ? $key .
-                            "_" .
-                            $ext->id .
-                            "/" .
-                            time() .
-                            "." .
-                            $file->getClientOriginalExtension()
-                        : null;
-                    $filepath = $file
-                        ? Storage::disk("spaces")->put(
-                            $folder,
-                            file_get_contents($file)
-                        )
-                        : null;
+                    $folder = "/" . $key . "_" . $ext->id;
+                    $filepath = $file ? $file->store($folder) : null;
                     if ($file && $filepath) {
                         Storage::disk("spaces")->delete($ext->property_value);
                         $ext->property_value = $filepath;

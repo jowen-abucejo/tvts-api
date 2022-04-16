@@ -1,7 +1,6 @@
 <?php
 
 return [
-
     /*
     |--------------------------------------------------------------------------
     | Default Filesystem Disk
@@ -13,7 +12,7 @@ return [
     |
     */
 
-    'default' => env('FILESYSTEM_DRIVER', 'local'),
+    "default" => env("FILESYSTEM_DRIVER", "local"),
 
     /*
     |--------------------------------------------------------------------------
@@ -28,18 +27,17 @@ return [
     |
     */
 
-    'disks' => [
-
-        'local' => [
-            'driver' => 'local',
-            'root' => storage_path('app'),
+    "disks" => [
+        "local" => [
+            "driver" => "local",
+            "root" => storage_path("app"),
         ],
 
-        'public' => [
-            'driver' => 'local',
-            'root' => storage_path('app/public'),
-            'url' => env('APP_URL').'/storage',
-            'visibility' => 'public',
+        "public" => [
+            "driver" => "local",
+            "root" => storage_path("app/public"),
+            "url" => env("APP_URL") . "/storage",
+            "visibility" => "public",
         ],
 
         // 's3' => [
@@ -53,18 +51,17 @@ return [
         //     'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
         // ],
 
-        'spaces' => [
-            'driver' => 's3',
-            'key' => env('SPACES_ACCESS_KEY_ID'),
-            'secret' => env('SPACES_SECRET_ACCESS_KEY'),
-            'region' => env('SPACES_DEFAULT_REGION'),
-            'bucket' => env('SPACES_BUCKET'),
-            'url' => env('SPACES_URL'),
-            'endpoint' => env('SPACES_ENDPOINT'),
-            'bucket_endpoint' => true,
-            'visibility' => 'public',
-          ],
-
+        "spaces" => [
+            "driver" => "s3",
+            "key" => env("SPACES_ACCESS_KEY_ID"),
+            "secret" => env("SPACES_SECRET_ACCESS_KEY"),
+            "region" => env("SPACES_DEFAULT_REGION"),
+            "bucket" => env("SPACES_BUCKET"),
+            "url" => env("SPACES_URL"),
+            "endpoint" => env("SPACES_ENDPOINT"),
+            "bucket_endpoint" => true,
+            "visibility" => "public",
+        ],
     ],
 
     /*
@@ -78,8 +75,7 @@ return [
     |
     */
 
-    'links' => [
-        public_path('storage') => storage_path('app/public'),
+    "links" => [
+        public_path("storage") => storage_path("app/public"),
     ],
-
 ];

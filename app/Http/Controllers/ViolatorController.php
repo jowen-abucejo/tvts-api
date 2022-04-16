@@ -113,7 +113,7 @@ class ViolatorController extends Controller
             foreach ($violator_extra_properties as $ext) {
                 if ($ext->data_type == "image") {
                     $key = $ext->property . "";
-                    $folder = "/" . $key . "_" . $ext->id;
+                    $folder = "/" . $key . "_" . $ext->id . "/";
                     $file = $request->hasFile($key)
                         ? $request->file($key)
                         : null;
@@ -240,7 +240,7 @@ class ViolatorController extends Controller
                     $file = $request->hasFile($key)
                         ? $request->file($key)
                         : null;
-                    $folder = "/" . $key . "_" . $ext->id;
+                    $folder = "/" . $key . "_" . $ext->id . "/";
                     $filepath = $file ? $file->store($folder) : null;
                     if ($file && $filepath) {
                         Storage::disk("spaces")->delete($ext->property_value);

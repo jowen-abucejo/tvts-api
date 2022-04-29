@@ -7,22 +7,20 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class TicketIssued extends Mailable
+class TicketPaid extends Mailable
 {
     use Queueable, SerializesModels;
 
     public $ticket_number;
-    public $qr;
 
     /**
      * Create a new message instance.
      *
      * @return void
      */
-    public function __construct($ticket_number, $qr)
+    public function __construct($ticket_number)
     {
         $this->ticket_number = $ticket_number;
-        $this->qr = $qr;
     }
 
     /**
@@ -32,8 +30,8 @@ class TicketIssued extends Mailable
      */
     public function build()
     {
-        return $this->markdown("emails.tickets.issued")
-            ->with(["ticket_number" => $this->ticket_number])
-            ->attachFromStorage($this->qr);
+        return $this->markdown("emails.tickets.paid")->with([
+            "ticket_number" => $this->ticket_number,
+        ]);
     }
 }

@@ -90,7 +90,7 @@ class PaymentController extends Controller
         $date_of_payment = new DateTime($request->date_of_payment);
         $payment = Payment::create([
             "OR_number" => strtoupper($request->or_number),
-            "created_at" => $date_of_payment->format("Y:m:d H:i:s"),
+            "created_at" => $date_of_payment->format("Y-m-d H:i:s"),
             "penalties" => is_array($request->penalties)
                 ? implode(",", $request->penalties)
                 : $request->penalties . ",",
@@ -119,7 +119,7 @@ class PaymentController extends Controller
                     Nexmo::message()->send([
                         "to" => "63" . $mobile,
                         "from" => "Naic PNP/NTMO",
-                        "text" => "Your Citation Ticket $ticket->ticket_number was paid and settled. ",
+                        "text" => "Your Citation Ticket $ticket->ticket_number has been paid and settled. ",
                     ]);
                 }
             } catch (\Throwable $th) {

@@ -167,7 +167,7 @@ class PaymentController extends Controller
                         );
                     },
                 ])
-                ->get();
+                ->get()->extraProperties;
 
             if ($violator_images->count() > 0) {
                 foreach ($violator_images as $image) {
@@ -190,7 +190,7 @@ class PaymentController extends Controller
                         );
                     },
                 ])
-                ->get();
+                ->get()->extraProperties;
 
             if ($ticket_images->count() > 0) {
                 foreach ($ticket_images as $image) {
@@ -202,6 +202,7 @@ class PaymentController extends Controller
                     }
                 }
             }
+            /*** end delete images */
 
             return new PaymentResource($payment);
         }

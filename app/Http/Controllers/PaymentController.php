@@ -167,9 +167,9 @@ class PaymentController extends Controller
                         );
                     },
                 ])
-                ->get()->extraProperties;
+                ->first()->extraProperties;
 
-            if ($violator_images->count() > 0) {
+            if (count($violator_images) > 0) {
                 foreach ($violator_images as $image) {
                     try {
                         Storage::disk("spaces")->delete($image->property_value);
@@ -190,7 +190,7 @@ class PaymentController extends Controller
                         );
                     },
                 ])
-                ->get()->extraProperties;
+                ->first()->extraProperties;
 
             if ($ticket_images->count() > 0) {
                 foreach ($ticket_images as $image) {

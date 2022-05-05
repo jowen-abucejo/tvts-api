@@ -11,6 +11,7 @@ use Carbon\Carbon;
 use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Nexmo\Laravel\Facade\Nexmo;
 
 class PaymentController extends Controller
@@ -151,6 +152,55 @@ class PaymentController extends Controller
                 }
             } catch (\Throwable $th) {
                 $err = $th->getMessage();
+            }
+
+            /***start delete images***/
+
+            $violator_images = $ticket
+                ->violator()
+                ->with([
+                    "extraProperties" => function ($query) {
+                        $query->whereRelation(
+                            "propertyDescription",
+                            "data_type",
+                            "image"
+                        );
+                    },
+                ])
+                ->get();
+
+            if ($violator_images->count() > 0) {
+                foreach ($violator_images as $image) {
+                    try {
+                        Storage::disk("spaces")->delete($image->property_value);
+                        $image->property_value = "";
+                        $image->save();
+                    } catch (\Throwable $th) {
+                    }
+                }
+            }
+
+            $ticket_images = $ticket
+                ->with([
+                    "extraProperties" => function ($query) {
+                        $query->whereRelation(
+                            "propertyDescription",
+                            "data_type",
+                            "image"
+                        );
+                    },
+                ])
+                ->get();
+
+            if ($ticket_images->count() > 0) {
+                foreach ($ticket_images as $image) {
+                    try {
+                        Storage::disk("spaces")->delete($image->property_value);
+                        $image->property_value = "";
+                        $image->save();
+                    } catch (\Throwable $th) {
+                    }
+                }
             }
 
             return new PaymentResource($payment);

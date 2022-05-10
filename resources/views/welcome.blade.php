@@ -35,7 +35,7 @@
                             </div>
 								<h4>Effective Date: July 1, 2022</h4>
 								<p>
-									This policies expains what information we collect from viollators when using Traffic Violation Ticketing System for citations. It also has information about how we store, use, transfer, and delete that information. Our aim is not just to comply with privacy law. It's to earn your trust.
+									This policies expains what information we collect from violators when using Traffic Violation Ticketing System for citations. It also has information about how we store, use, transfer, and delete that information. Our aim is not just to comply with privacy law. It's to earn your trust.
 								</p>
 								<br>
 								<h4>

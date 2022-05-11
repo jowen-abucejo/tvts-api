@@ -15,24 +15,24 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
         \App\Models\User::create([
-            'name'=> 'AdminF AdminM AdminL',
-            'username' => 'admin',
-            'password' => Hash::make('admin'),
-            'user_type' => 'admin',
+            "name" => "AdminF AdminM AdminL",
+            "username" => "admin",
+            "password" => Hash::make("admin"),
+            "user_type" => "admin",
         ]);
 
         \App\Models\User::create([
-            'name'=> 'EnforcernF EnforcernM EnforcernL',
-            'username' => 'user1',
-            'password' => Hash::make('user1'),
-            'user_type' => 'deputy officer',
+            "name" => "EnforcernF EnforcernM EnforcernL",
+            "username" => "user1",
+            "password" => Hash::make("user1"),
+            "user_type" => "treasury",
         ]);
 
         \App\Models\User::create([
-            'name'=> 'EnforcernFF EnforcernMM EnforcernLL',
-            'username' => 'user2',
-            'password' => Hash::make('user2'),
-            'user_type' => 'deputy officer',
+            "name" => "EnforcernFF EnforcernMM EnforcernLL",
+            "username" => "user2",
+            "password" => Hash::make("user2"),
+            "user_type" => "officer",
         ]);
     }
 }

@@ -49,7 +49,10 @@ class User extends Authenticatable
 
     public function isAdmin()
     {
-        if ($this->user_type == "admin") {
+        if (
+            $this->user_type == "admin" ||
+            $this->user_type == "deputy officer"
+        ) {
             return true;
         }
         return false;
@@ -65,7 +68,7 @@ class User extends Authenticatable
 
     public function isEnforcer()
     {
-        if ($this->user_type == "deputy officer") {
+        if ($this->user_type == "officer") {
             return true;
         }
         return false;

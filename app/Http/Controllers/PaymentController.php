@@ -44,17 +44,20 @@ class PaymentController extends Controller
             //if payments are filtered by date
             return PaymentResource::collection(
                 Payment::with("ticket")
-                    ->whereHas("ticket", function ($query) use (
-                        $like,
-                        $search
-                    ) {
-                        $query->where(
-                            "ticket_number",
-                            $like,
-                            "%" . $search . "%"
-                        );
+                    ->where(function ($query) use ($like, $search) {
+                        $query
+                            ->whereHas("ticket", function ($query) use (
+                                $like,
+                                $search
+                            ) {
+                                $query->where(
+                                    "ticket_number",
+                                    $like,
+                                    "%" . $search . "%"
+                                );
+                            })
+                            ->orWhere("OR_number", $like, "%" . $search . "%");
                     })
-                    ->orWhere("OR_number", $like, "%" . $search . "%")
                     ->where("created_at", ">=", $start_date)
                     ->where("created_at", "<=", $end_date)
                     ->orderBy("created_at", $order)

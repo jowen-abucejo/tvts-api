@@ -348,7 +348,7 @@ class TicketController extends Controller
             "violator_count" => [],
         ];
         $all_ticket_count = Ticket::count();
-
+        $customRange = $request->start_date && $request->end_date;
         if (intval($all_ticket_count) < 1) {
             return response()->json([
                 "data" => $data,
@@ -356,28 +356,20 @@ class TicketController extends Controller
         }
         $data->all_ticket_count = $all_ticket_count;
 
-        $start_date =
-            !$request->month || !$request->year
-                ? now()
-                    ->startOfMonth()
-                    ->toDateTimeString()
-                : Carbon::createFromFormat(
-                    "Y-m-d",
-                    $request->year . "-" . $request->month . "-01"
-                )
-                    ->startOfMonth()
-                    ->toDateTimeString();
-        $end_date =
-            !$request->month || !$request->year
-                ? now()
-                    ->endOfMonth()
-                    ->toDateTimeString()
-                : Carbon::createFromFormat(
-                    "Y-m-d",
-                    $request->year . "-" . $request->month . "-01"
-                )
-                    ->endOfMonth()
-                    ->toDateTimeString();
+        $start_date = !$request->start_date
+            ? now()
+                ->startOfMonth()
+                ->toDateTimeString()
+            : Carbon::createFromFormat("Y-m-d", $request->start_date)
+                ->startOfDay()
+                ->toDateTimeString();
+        $end_date = !$request->end_date
+            ? now()
+                ->endOfMonth()
+                ->toDateTimeString()
+            : Carbon::createFromFormat("Y-m-d", $request->end_date)
+                ->endOfDay()
+                ->toDateTimeString();
 
         $day_format_query =
             env("DB_CONNECTION") == "pgsql"
@@ -405,9 +397,21 @@ class TicketController extends Controller
             ->orderBy("day_order", "ASC")
             ->get([$day_format_query, $day_order_query, $ticket_count_query]);
 
-        if (count($daily_ticket) >= 5) {
+        if (count($daily_ticket) >= 5 || $customRange) {
             $data->daily_ticket = $daily_ticket;
-            $data->date = ["month" => now()->monthName, "year" => now()->year];
+            $data->date = $customRange
+                ? [
+                    "month" =>
+                        Carbon::createFromFormat(
+                            "Y-m-d",
+                            $request->start_date
+                        )->toFormattedDateString() . " to",
+                    "year" => Carbon::createFromFormat(
+                        "Y-m-d",
+                        $request->end_date
+                    )->toFormattedDateString(),
+                ]
+                : ["month" => now()->monthName, "year" => now()->year];
             $data->tickets = TicketResource::collection(
                 Ticket::where("datetime_of_apprehension", ">=", $start_date)
                     ->where("datetime_of_apprehension", "<=", $end_date)

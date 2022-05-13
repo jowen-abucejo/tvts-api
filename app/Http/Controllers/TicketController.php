@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
-use Nexmo\Laravel\Facade\Nexmo;
+use Illuminate\Notifications\Facades\Vonage;
 class TicketController extends Controller
 {
     /**
@@ -195,7 +195,7 @@ class TicketController extends Controller
                     ->first()->extraProperties[0]->property_value;
 
                 if ($mobile && env("APP_ENV") == "production") {
-                    Nexmo::message()->send([
+                    Vonage::message()->send([
                         "to" => "63" . $mobile,
                         "from" => "Naic PNP/NTMO",
                         "text" => "Citation Ticket $ticket->ticket_number was issued to you. Please appear at the Naic PNP/NTMO  within 72 hours to answer the stated charges.Failing to settle your case within 15 days from date of apprehension will result to the suspension/revocation of your license.",

@@ -12,7 +12,7 @@ use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
-use Nexmo\Laravel\Facade\Nexmo;
+use Illuminate\Notifications\Facades\Vonage;
 
 class PaymentController extends Controller
 {
@@ -120,7 +120,7 @@ class PaymentController extends Controller
                     ->first()->extraProperties[0]->property_value;
 
                 if ($mobile && env("APP_ENV") == "production") {
-                    Nexmo::message()->send([
+                    Vonage::message()->send([
                         "to" => "63" . $mobile,
                         "from" => "Naic PNP/NTMO",
                         "text" => "Your Citation Ticket $ticket->ticket_number has been paid and settled. ",

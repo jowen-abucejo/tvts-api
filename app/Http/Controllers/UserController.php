@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
+use Jenssegers\Agent\Facades\Agent;
 
 class UserController extends Controller
 {
@@ -333,6 +334,18 @@ class UserController extends Controller
             // Authentication passed...
             $user = Auth::user();
 
+            $agent = new Agent();
+
+            if ($$agent->isMobile() && $user->isTreasury()) {
+                return response()->json(
+                    [
+                        "error" => "No Permission!",
+                        "message" =>
+                            "Account not allowed to use the application",
+                    ],
+                    401
+                );
+            }
             //revoked all previous token
             DB::table("oauth_access_tokens")
                 ->where("user_id", "=", $user->id)

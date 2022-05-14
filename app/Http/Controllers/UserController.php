@@ -336,7 +336,7 @@ class UserController extends Controller
 
             $agent = new Agent();
 
-            if ($$agent->isMobile() && $user->isTreasury()) {
+            if ($agent->isMobile() && $user->isTreasury()) {
                 return response()->json(
                     [
                         "error" => "No Permission!",

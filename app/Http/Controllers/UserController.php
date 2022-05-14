@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
-use Jenssegers\Agent\Facades\Agent;
+use Jenssegers\Agent\Agent;
 
 class UserController extends Controller
 {

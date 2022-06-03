@@ -83,4 +83,14 @@ class User extends Authenticatable
     {
         return $this->hasMany(Ticket::class, "issued_by", "id")->withTrashed();
     }
+
+    /**
+     * Get all of the ticket issued by the User
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function activityLogs()
+    {
+        return $this->hasMany(ActivityLog::class, "user_id", "id");
+    }
 }

@@ -9,7 +9,6 @@ use App\Models\Ticket;
 use App\Models\User;
 use Carbon\Carbon;
 use DateTime;
-use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
@@ -205,6 +204,17 @@ class TicketController extends Controller
                 $err = $th->getMessage();
             }
 
+            //store activity log to database
+            app("\App\Http\Controllers\ActivityLogController")->store(
+                $request,
+                [
+                    "time_log" => now()->format("Y-m-d H:i:s"),
+                    "activity" =>
+                        "Created citation ticket " . $ticket->ticket_number,
+                ]
+            );
+
+            //return Ticket Resource for the created Ticket
             return new TicketResource($ticket);
         } else {
             return response("Ticket is Null", 404);
@@ -313,6 +323,17 @@ class TicketController extends Controller
                     $ext->save();
                 }
             }
+
+            //store activity log to database
+            app("\App\Http\Controllers\ActivityLogController")->store(
+                $request,
+                [
+                    "time_log" => now()->format("Y-m-d H:i:s"),
+                    "activity" =>
+                        "Updated citation ticket " . $ticket->ticket_number,
+                ]
+            );
+
             return new TicketResource(Ticket::find($ticket_id));
         } catch (\Exception $e) {
             return response()->json([
@@ -327,10 +348,18 @@ class TicketController extends Controller
      * @param  number $ticket_id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($ticket_id)
+    public function destroy(Request $request, $ticket_id)
     {
         $deleted = Ticket::find($ticket_id);
         $deleted->delete();
+
+        //store activity log to database
+        app("\App\Http\Controllers\ActivityLogController")->store($request, [
+            "time_log" => now()->format("Y-m-d H:i:s"),
+            "activity" =>
+                "Soft deleted citation ticket " . $deleted->ticket_number,
+        ]);
+
         return response()->json(["deleted" => $deleted->trashed()]);
     }
 

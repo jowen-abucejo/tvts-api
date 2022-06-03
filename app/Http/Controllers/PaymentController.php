@@ -207,6 +207,17 @@ class PaymentController extends Controller
             }
             /*** end delete images */
 
+            //store activity log to database
+            app("\App\Http\Controllers\ActivityLogController")->store(
+                $request,
+                [
+                    "time_log" => now()->format("Y-m-d H:i:s"),
+                    "activity" =>
+                        "Created payment for citation ticket " .
+                        $payment->ticket->ticket_number,
+                ]
+            );
+
             return new PaymentResource($payment);
         }
         return response()->json(
@@ -279,6 +290,14 @@ class PaymentController extends Controller
         $payment->total_amount = $request->total_amount;
         $payment->save();
 
+        //store activity log to database
+        app("\App\Http\Controllers\ActivityLogController")->store($request, [
+            "time_log" => $payment->updated_at,
+            "activity" =>
+                "Updated payment for citation ticket " .
+                $payment->ticket->ticket_number,
+        ]);
+
         return new PaymentResource($payment);
     }
 
@@ -288,7 +307,7 @@ class PaymentController extends Controller
      * @param  number $payment_id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($payment_id)
+    public function destroy(Request $request, $payment_id)
     {
         if (!$payment_id) {
             return response()->json(["deleted" => false]);
@@ -304,6 +323,12 @@ class PaymentController extends Controller
         $ticket->payment_id = null;
         $ticket->save();
         $deleted->delete();
+        //store activity log to database
+        app("\App\Http\Controllers\ActivityLogController")->store($request, [
+            "time_log" => now()->format("Y-m-d H:i:s"),
+            "activity" =>
+                "Deleted payment for citation ticket " . $ticket->ticket_number,
+        ]);
         return response()->json(["deleted" => true]);
     }
 

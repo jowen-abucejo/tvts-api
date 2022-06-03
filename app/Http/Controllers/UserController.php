@@ -87,6 +87,12 @@ class UserController extends Controller
             "user_type" => $request->user_type,
         ]);
 
+        //store activity log to database
+        app("\App\Http\Controllers\ActivityLogController")->store($request, [
+            "time_log" => $new_user->created_at,
+            "activity" => "Created new user account for " . $new_user->name,
+        ]);
+
         return new UserResource($new_user);
     }
 
@@ -152,6 +158,17 @@ class UserController extends Controller
                 "password" => Hash::make($username),
             ]);
             $user->save();
+
+            //store activity log to database
+            app("\App\Http\Controllers\ActivityLogController")->store(
+                $request,
+                [
+                    "time_log" => $user->updated_at,
+                    "activity" =>
+                        "Resets account's login credentials of " . $user->name,
+                ]
+            );
+
             return response()->json(["update_success" => true]);
         } catch (\Throwable $th) {
             return response()->json(
@@ -205,6 +222,16 @@ class UserController extends Controller
                 "user_type" => $request->user_type,
             ]);
             $user->save();
+
+            //store activity log to database
+            app("\App\Http\Controllers\ActivityLogController")->store(
+                $request,
+                [
+                    "time_log" => now()->format("Y-m-d H:i:s"),
+                    "activity" => "Updated user account of " . $user->name,
+                ]
+            );
+
             return response()->json(["update_success" => true]);
         }
 
@@ -233,6 +260,15 @@ class UserController extends Controller
                 "password" => Hash::make($request->new_password),
             ]);
             $user->save();
+            //store activity log to database
+            app("\App\Http\Controllers\ActivityLogController")->store(
+                $request,
+                [
+                    "time_log" => now()->format("Y-m-d H:i:s"),
+                    "activity" => "Updated user account of " . $user->name,
+                ]
+            );
+
             return response()->json(["update_success" => true]);
         }
         return response()->json(
@@ -279,10 +315,32 @@ class UserController extends Controller
             if ($user->trashed()) {
                 $user->restore();
                 $user->save();
+
+                //store activity log to database
+                app("\App\Http\Controllers\ActivityLogController")->store(
+                    $request,
+                    [
+                        "time_log" => $user->updated_at,
+                        "activity" =>
+                            "Updated account's status of " . $user->name,
+                    ]
+                );
                 return response()->json(["update_status" => true]);
             }
 
             $user->delete();
+
+            //store activity log to database
+            app("\App\Http\Controllers\ActivityLogController")->store(
+                $request,
+                [
+                    "time_log" => $user->updated_at,
+                    "activity" =>
+                        "Updated user account's active status of " .
+                        $user->name,
+                ]
+            );
+
             return response()->json(["update_status" => $user->trashed()]);
         }
 
@@ -295,6 +353,12 @@ class UserController extends Controller
                 400
             );
         }
+
+        //store activity log to database
+        app("\App\Http\Controllers\ActivityLogController")->store($request, [
+            "time_log" => now()->format("Y-m-d H:i:s"),
+            "activity" => "Deleted user account of " . $user->name,
+        ]);
 
         $user->forceDelete();
         return response()->json(["deleted" => true]);

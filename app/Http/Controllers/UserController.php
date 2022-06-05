@@ -336,8 +336,7 @@ class UserController extends Controller
                 [
                     "time_log" => $user->updated_at,
                     "activity" =>
-                        "Updated user account's active status of " .
-                        $user->name,
+                        "Updated account's active status of " . $user->name,
                 ]
             );
 
@@ -357,7 +356,7 @@ class UserController extends Controller
         //store activity log to database
         app("\App\Http\Controllers\ActivityLogController")->store($request, [
             "time_log" => now()->format("Y-m-d H:i:s"),
-            "activity" => "Deleted user account of " . $user->name,
+            "activity" => "Deleted account of " . $user->name,
         ]);
 
         $user->forceDelete();

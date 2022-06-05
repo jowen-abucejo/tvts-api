@@ -65,7 +65,13 @@ class ActivityLogController extends Controller
         $agent = new Agent();
         $from_device =
             $agent->device() != null
-                ? " from " . $agent->device() . " " . $agent->platform()
+                ? " from " .
+                    $agent->deviceType() .
+                    " (" .
+                    $agent->platform() .
+                    " " .
+                    $agent->version($agent->platform()) .
+                    ")"
                 : "";
         $activity = (object) $activityLog;
         $request
